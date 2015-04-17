@@ -162,7 +162,8 @@ var param = {
 	vibrateEnable:,// 0-关闭，1-开启。默认为1 开启震动提醒
 	userSpeaker:,// 0-关闭，1-开启。默认为1 开启扬声器播放
 	showNotificationInBackgroud:// 0-关闭，1-开启。默认为1。设置后台接收新消息时是否通过通知栏提示 （仅安卓可用）
-	acceptInvitationAlways:,// 0-关闭，1-开启。默认添加好友时为1，是不需要验证的，改成需要验证为0（仅安卓可用）  			deliveryNotification:，// 0-关闭 1-开启  默认为1 开启消息送达通知	（仅iOS可用）
+	acceptInvitationAlways:,// 0-关闭，1-开启。默认添加好友时为1，是不需要验证的，改成需要验证为0（仅安卓可用）
+	deliveryNotification:，// 0-关闭 1-开启  默认为1 开启消息送达通知	（仅iOS可用）
 }
 ###[3]Conversation
 ***
@@ -326,6 +327,7 @@ var param = {
 #####[4.12]getBlackListUsernames();//获取黑名单列表
 #####[4.13]cbGetBlackListUsernames(param)//获取黑名单列表回调
 var param = {
+
 	usernames:,//List<String> json格式
 }
 #####[4.14]addUserToBlackList(param)//把用户加入到黑名单
@@ -335,6 +337,7 @@ var param = {
 }
 #####[4.15]deleteUserFromBlackList(param)//把用户从黑名单中移除
 var param = {
+
 	username:,//
 }
 
@@ -360,7 +363,8 @@ var param = {
 }
 
 #####[5.3]onGroupDestroy(param)//群聊被创建者解散
-	var param = {
+var param = {
+
 	groupId:,
 	groupName:,
 }
@@ -442,7 +446,8 @@ var param = {
 } 
 
 #####[5.11]joinGroup(param)//加入某个群聊，只能用于加入公开群
-	var param = {
+var param = {
+
 	groupId://
 	reason:// //如果群开群是自由加入的，即group.isMembersOnly()为false，此参数不传
     groupName://群组名称
@@ -474,7 +479,7 @@ var param = {
 
 #####[5.16]getAllPublicGroupsFromServer();//获取所有公开群列表
 #####[5.17]cbGetAllPublicGroupsFromServer(param)//获取所有公开群列表回调
-	var param = {
+var param = {
 	
 	result://0-成功，1-失败
 	grouplist:List< EMGroup> json格式 见附录
@@ -563,7 +568,7 @@ var param = {
 #####[6.2]onCallStateChanged(param)//通话状态监听
 var param = {
 
-  	state:,//1-正在连接对方，2-双方已经建立连接，3-同意语音申请，建立语音通话中，4-连接中断 5-电话暂停中 6-电话等待对方同意接听 7-通话中 
+	state:,//1-正在连接对方，2-双方已经建立连接，3-同意语音申请，建立语音通话中，4-连接中断 5-电话暂停中 6-电话等待对方同意接听 7-通话中 
   }
         
         
