@@ -1,5 +1,8 @@
 #uexEasemob插件接口文档
-2015-04-17  by:刘康立
+2015-04-17  初稿by:刘康立
+2015-04-20	新增[2.12][2.13]方法
+			修改了[2.1]的回调值的结构
+			统一了Android和iOS返回的json对象的结构，对附录做了大量修订
 
 ###[1]Initialization
 ***
@@ -9,7 +12,8 @@
   
 	appKey:,//区别app的标识       
 	apnsCertName:,//iOS中推送证书名称
-       
+    
+	//Android 中此参数需要在AndroidManifest.xml中配置
 }
 
 #####[1.2]login(param) //登陆
@@ -66,7 +70,7 @@ var param = {
 	isLoggedIn://当前是否已有登录用户  1-是 2-否
 	isConnected://是否连上聊天服务器   1-是 2-否
 }
-#####[1.10]onConnected();//已连接上（仅安卓可用）
+#####[1.10]onConnected();//已连接上（仅Android可用）
 #####[1.11]onDisconnected(param)//链接断开
 var param = {
 
@@ -78,13 +82,11 @@ var param = {
 ***
 #####[2.1]onNewMessage（param）//收到新消息监听
 
-var param = {
 
-	msg:,// EMMessage的json格式对象
-}; 
 
-	注：EMMessage具体结构见文末附录
-	   所有离线和在线时接受到的的非透传消息，都通过此回调传递
+	注：param为EMMessage的json格式对象
+	EMMessage具体结构见文末附录
+	所有离线和在线时接受到的的非透传消息，都通过此回调传递
 	   
 #####[2.2]onCmdMessageReceive(param)//透传消息监听
 var param = {
@@ -118,7 +120,7 @@ var param = {
 	username:,//单聊时聊天人的userid或者群聊时groupid
 	chatType:,//1-单聊，2-群聊
 	filePath:,//语音文件路径
-	length:,//长度(仅安卓需要)
+	length:,//长度(仅Android需要)
 	displayName：//对方接收时显示的文件名（仅iOS需要）
 }
 
@@ -161,10 +163,22 @@ var param = {
 	soundEnable:,// 0-关闭，1-开启。默认为1 开启声音提醒
 	vibrateEnable:,// 0-关闭，1-开启。默认为1 开启震动提醒
 	userSpeaker:,// 0-关闭，1-开启。默认为1 开启扬声器播放
-	showNotificationInBackgroud:// 0-关闭，1-开启。默认为1。设置后台接收新消息时是否通过通知栏提示 （仅安卓可用）
-	acceptInvitationAlways:,// 0-关闭，1-开启。默认添加好友时为1，是不需要验证的，改成需要验证为0（仅安卓可用）
+	showNotificationInBackgroud:// 0-关闭，1-开启。默认为1。设置后台接收新消息时是否通过通知栏提示 （仅Android可用）
+	acceptInvitationAlways:,// 0-关闭，1-开启。默认添加好友时为1，是不需要验证的，改成需要验证为0（仅Android可用）
 	deliveryNotification:，// 0-关闭 1-开启  默认为1 开启消息送达通知	（仅iOS可用）
 }
+#####[2.12]getMessageById(param)//根据id获取消息记录（仅Android可用）
+var param = {
+
+	msgId:,//消息ID
+};
+#####[2.13]cbGetMessageById(param)//得到一条消息记录（仅Android可用）
+var param = {
+
+	msg:,// EMMessage的json格式对象
+};
+	
+	
 ###[3]Conversation
 ***
 #####[3.1]getConversationByName(param)//根据用户名获取conversation对象
@@ -179,7 +193,7 @@ var param = {
 	conversation:,// EMConversation的json格式对象，格式见附录
 };
 
-#####[3.3]getMessageHistory(param)//获取聊天记录(仅安卓可用)
+#####[3.3]getMessageHistory(param)//获取聊天记录(仅Android可用)
 var param = {
 
 	username:,//单聊时聊天人的userName或者群聊时groupid
@@ -187,7 +201,7 @@ var param = {
 	startMsgId:,//获取startMsgId之前的pagesize条消息
 	pagesize:,//分页大小，为0时获取所有消息，startMsgId可不传
 }
-#####[3.4]cbGetMessageHistory(param)//获取聊天记录回调（仅安卓）
+#####[3.4]cbGetMessageHistory(param)//获取聊天记录回调（仅Android）
 var param = {
 
 	messages:,//List<EMMessage>的json格式对象
@@ -214,19 +228,19 @@ var param = {
 }
 
 
-#####[3.8]resetAllUnreadMsgCount();//所有未读消息数清零（仅安卓可用）
+#####[3.8]resetAllUnreadMsgCount();//所有未读消息数清零（仅Android可用）
 	
-#####[3.9]getMsgCount(param)//获取消息总数（仅安卓可用）
+#####[3.9]getMsgCount(param)//获取消息总数（仅Android可用）
 var param = {
 
 	username:,//username|groupid
 }
-#####[3.10]cbGetMsgCount(param)//获取消息总数回调（仅安卓可用）
+#####[3.10]cbGetMsgCount(param)//获取消息总数回调（仅Android可用）
 var param = {
 
 	msgCount:,//消息总数
 }
-#####[3.11]clearConversation(param)//清空会话聊天记录（仅安卓可用）
+#####[3.11]clearConversation(param)//清空会话聊天记录（仅Android可用）
 var param = {
 
 	username:,//username|groupid
@@ -250,12 +264,12 @@ var param = {
 
 ###[4]Friend
 ***
-#####[4.1]onContactAdded(param)//新增联系人监听（仅安卓）
+#####[4.1]onContactAdded(param)//新增联系人监听（仅Android）
 var param = {
 
 	userNameList:,//json格式的List<String>
 };
-#####[4.2]onContactDeleted(param)//删除联系人监听（仅安卓）
+#####[4.2]onContactDeleted(param)//删除联系人监听（仅Android）
 var param = {
 
 	userNameList:,//json格式的List<String>
@@ -280,26 +294,16 @@ var param = {
 	username:,//
 };
 #####[4.6]getContactUserNames();//获取好友列表
+
+
 #####[4.7]cbGetContactUserNames(param)//获取好友列表回调
 var param = {
 
-	userNames:,//List<EMBuddy> json格式字符串
+	usernames:,//用户姓名字符串构成的数组	
+	
 }
 	
-	注:
-	当系统为安卓时，EMBuddy即为用户名，且只包含互为好友的用户的用户名
-	当系统为iOS时，EMBuddy包含3个属性{
-      isPendingApproval:,
-      username:,
-      followState:,
-      }
-  	 	 *A向B发送好友请求,会自动将B添加到A的好友列表中,但isPendingApproval为true，表示等待B接受A的好友请求，如果在好友列表中,不需要显示isPendingApproval为true的用户,筛选List即可
-		 *EMBuddyFollowState的值涵义如下
- 		    0-双方不是好友
-   			1-对方已接受好友请求.
-   			2-登录用户已接受了该用户的好友请求
-    		3-“登录用户”和"小伙伴"都互相在好友列表中
-    		
+
     		
     		
 #####[4.8]addContact(param)//添加好友
@@ -393,7 +397,7 @@ var param = {
 #####[5.6]onApplicationDeclined(param)//加群申请被拒绝
 var param = {
 
-	groupId:,//（仅安卓）
+	groupId:,//（仅Android）
 	groupName:,
 	decliner:,
 	reason:,
@@ -427,7 +431,7 @@ var param = {
 #####[5.9]addUsersToGroup(param)//群聊加人
 var param = {
 
-	isGroupOwner:,//是否群主(仅安卓需要)
+	isGroupOwner:,//是否群主(仅Android需要)
 	groupId://
 	newmembers://群聊新成员，List<String> Json格式
     inviteMessage:// 新增参数 邀请信息
@@ -445,6 +449,7 @@ var param = {
 	username://
 } 
 
+	只有owner才有权限进行此操作
 #####[5.11]joinGroup(param)//加入某个群聊，只能用于加入公开群
 var param = {
 
@@ -520,31 +525,31 @@ var param = {
 	changedGroupName:,//改变后的群组名称
 }
 
-#####[5.23]setReceiveNotNoifyGroup(param)//群聊不提醒只显示数目（仅安卓可用）
+#####[5.23]setReceiveNotNoifyGroup(param)//群聊不提醒只显示数目（仅Android可用）
 var param = {
 
 	groupIds:// List<String> 
 }
-#####[5.24]blockUser(param)//将群成员拉入群组的黑名单（仅安卓可用）
+#####[5.24]blockUser(param)//将群成员拉入群组的黑名单（仅Android可用）
 var param = {
 
 	groupId:,// 
 	username://待屏蔽的用户名
 }
-#####[5.25]unblockUser(param)//将拉入黑名单的群成员移除（仅安卓可用）
+#####[5.25]unblockUser(param)//将拉入黑名单的群成员移除（仅Android可用）
 var param = {
 
 	groupId:,// 
 	username://待解除屏蔽的 用户名
 }
-#####[5.26]getBlockedUsers(param)//获取群组的黑名单用户列表（仅安卓可用）
+#####[5.26]getBlockedUsers(param)//获取群组的黑名单用户列表（仅Android可用）
 var param = {
 
 	groupId:,// 
 }
 
 
-#####[5.27]cbGetBlockedUsers(param)//获取群组的黑名单用户列表回调（仅安卓）
+#####[5.27]cbGetBlockedUsers(param)//获取群组的黑名单用户列表回调（仅Android）
 	var param = {
 	usernames:,// List<String> json格式 
 }
@@ -631,31 +636,70 @@ var param{
 
 ##附录
 
-#####iOS系统下 EMMessage json字符串返回值结构  
+####EMMessage json字符串返回值结构  
 
 
-key |说明         | 
------------- | ------------- |
-from| 发送者       | 
-to | 接受者  |
+key |说明         
+------------ | ------------- 
+from| 发送者        
+to | 接受者  
 messageId|消息id
-conversationChatter|	消息所在的conversation识别名
-isGroup	|是否为群组
+messageTime|消息发送或接收的时间
+isAcked|是否接收到了接收方的阅读回执, 或是否已发送了阅读回执给对方
+isDelivered|对于发送方来说, 该值表示:接收方是否已收到了消息, 对于接收方来说, 表示:接收方是否已发送了"已接收回执" 给对方
 isRead	|是否已读
-isOfflineMessage|	是否是离线消息
-messageBodies|	消息主体json
+isGroup|是否来源于群组
+messageType|消息类型  text/video/audio/image/location/file/cmd
+messageBody|消息主体json
+
+messageBody的结构为
+
+#####普通文本消息
+	
+key |说明         
+-------- | ------
+text| 文本内容
+
+#####透传消息
+	
+key |说明         
+-------- | ------
+action| 具体命令 
+
+#####位置消息
+key |说明         
+-------- | ------ 
+longitute| 经度
+latitude|纬度
+address|地理位置信息
+
+
+#####视频/语音/图片/文件消息
 	
 	
+key |说明         
+-------- | ------
+displayName|显示名
+remotePath	|服务器远程文件路径	
+secretKey	|远端文件的密钥	
+thumbnailRemotePath|预览图文件的服务器远程路径(仅视频/图片消息)
+thumbnailSecretKey|预览图文件的密钥(仅视频/图片消息)
+ 
+
+
+ 
+
+
 
 
 
 	返回的json数据中会包含除上述属性之外的一些其他信息，均可以忽略
 
-#####iOS系统下 EMConversation json字符串返回值结构 
+####EMConversation json字符串返回值结构 
 
 
-key |说明         | 
------------- | ------------- |
+key |说明         
+------------ | -------------
 chatter	|conversation识别名
 isGroup	|是否为群组
 messages	|"conversation所包含的message列表，表内元素为EMMessage的json字符串"
@@ -665,25 +709,42 @@ messages	|"conversation所包含的message列表，表内元素为EMMessage的js
 
 
 	返回的json数据中会包含除上述属性之外的一些其他信息，均可以忽略
-#####iOS系统下 EMGroup json字符串返回值结构 
+#### EMGroup json字符串返回值结构 
 
 
-key |说明         | 
------------- | ------------- |
+key |说明         
+------------ | -------------
 groupSubject	|群组名
-menbers	|包含的成员
+members	|包含的成员
 owner	|群主
 isPushNotificationEnable	|是否允许推送提醒
 isBlock	|是否被用户屏蔽
 groupMaxUserCount	|群组最大人数
 groupId	|群组Id
-groupStyle|群组类型
-	
-	注：EMGroup的属性中 群组类型groupStyle涵义为
-           0-私有群组，只能owner权限的人邀请人加入
-           1- 私有群组，owner和member权限的人可以邀请人加入
-           2- 公开群组，允许非群组成员申请加入，需要管理员同意才能真正加入该群组
-           3- 公开群组，允许非群组成员加入，不需要管理员同意
-           4- 公开匿名群组，允许非群组成员加入，不需要管理员同意
+isPublic|群组类型
+allowInvites|是否允许群成员邀请人进群
+membersOnly|需要申请和验证才能加入
 
-	返回的json数据中会包含除上述属性之外的一些其他信息，均可以忽略
+
+
+## android混淆配置
+如果应用进行混淆，需要加上如下配置：
+~~~
+##---------------Begin: proguard configuration for Gson  ----------
+# Gson uses generic type information stored in a class file when working with fields. Proguard
+# removes such information by default, so configure it to keep all of it.
+-keepattributes Signature
+
+# For using GSON @Expose annotation
+-keepattributes *Annotation*
+
+# Gson specific classes
+-keep class sun.misc.Unsafe { *; }
+#-keep class com.google.gson.stream.** { *; }
+
+# Application classes that will be serialized/deserialized over Gson
+-keep class org.zywx.wbpalmstar.widgetone.uexEasemob.vo.** { *; }
+-keep class com.google.gson.** {*;}
+-keep class * implements java.io.Serializable {*;}
+##---------------End: proguard configuration for Gson  ----------
+~~~
