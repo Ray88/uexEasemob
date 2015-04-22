@@ -18,6 +18,7 @@
 
 
 
+
 @interface EUExEasemob()<IChatManagerDelegate,EMCallManagerDelegate>
 
 
@@ -30,6 +31,7 @@
 @property (assign, nonatomic) BOOL isPlayVibration;
 @property (assign, nonatomic) BOOL messageNotification;
 @property (assign, nonatomic) BOOL userSpeaker;
+@property (assign, nonatomic) BOOL isInitialized;
 @end
 
 
@@ -43,7 +45,7 @@
 -(id)initWithBrwView:(EBrowserView *)eInBrwView{
     self=[super initWithBrwView:eInBrwView];
     if(self){
-    
+        self.isInitialized = NO;
     }
     return  self;
 }
@@ -65,6 +67,7 @@
         [self.call release];
         self.call=nil;
     }
+    self.isInitialized = NO;
 }
 
 -(void)dealloc{
@@ -87,26 +90,31 @@
  }
  */
 -(void)initEasemob:(NSMutableArray *)array{
+    if(!self.isInitialized){
+        id initInfo =[self getDataFromJson:array[0]];
+        self.sharedInstance =[EaseMob sharedInstance];
+        self.sharedInstanceForCall = [EMSDKFull sharedInstance];
+        
+        
+        [self.sharedInstance registerSDKWithAppKey:[initInfo objectForKey:@"appKey"]
+                                      apnsCertName:[initInfo objectForKey:@"apnsCertName"]
+                                       otherConfig:@{kSDKConfigEnableConsoleLogger:[NSNumber numberWithBool:YES]}];
+        
+        
+        [self registerEaseMobNotification];//注册回调
+        self.lastPlaySoundDate = [NSDate date];
+        self.isPlayVibration = YES;
+        self.isPlaySound = YES;
+        self.messageNotification = YES;
+        self.userSpeaker = YES;
+        [self.sharedInstance.chatManager enableDeliveryNotification];//开启消息已送达回执
+        self.isInitialized =YES;
+        [self returnJSonWithName:@"cbInit" dictionary:@"init successfully!"];
+    }else{
+        [self returnJSonWithName:@"cbInit" dictionary:@"you have already initialized"];
+    }
     
-    
-    id initInfo =[self getDataFromJson:array[0]];
-    self.sharedInstance =[EaseMob sharedInstance];
-    self.sharedInstanceForCall = [EMSDKFull sharedInstance];
-    
-    
-    [self.sharedInstance registerSDKWithAppKey:[initInfo objectForKey:@"appKey"]
-                                  apnsCertName:[initInfo objectForKey:@"apnsCertName"]
-                                   otherConfig:@{kSDKConfigEnableConsoleLogger:[NSNumber numberWithBool:YES]}];
-    
-    
-    [self registerEaseMobNotification];//注册回调
-    self.lastPlaySoundDate = [NSDate date];
-    self.isPlayVibration = YES;
-    self.isPlaySound = YES;
-    self.messageNotification = YES;
-    self.userSpeaker = YES;
-    [self.sharedInstance.chatManager enableDeliveryNotification];//开启消息已送达回执
-    NSLog(@"init");
+
     
     
     

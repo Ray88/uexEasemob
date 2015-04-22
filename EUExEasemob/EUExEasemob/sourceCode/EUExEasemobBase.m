@@ -62,7 +62,7 @@
         NSString *result=[dict JSONFragment];
         NSString *jsSuccessStr = [NSString stringWithFormat:@"if(uexEasemob.%@ != null){uexEasemob.%@('%@');}",name,name,result];
     
-        [self performSelectorOnMainThread:@selector(callBack:) withObject:jsSuccessStr waitUntilDone:NO];;
+        [self performSelectorOnMainThread:@selector(callBack:) withObject:jsSuccessStr waitUntilDone:YES];
     
 }
 -(void)callBack:(NSString *)str{
