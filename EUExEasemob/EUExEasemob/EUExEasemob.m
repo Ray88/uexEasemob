@@ -305,31 +305,28 @@
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
     [dict setObject:[NSString stringWithFormat: @"%ld", (long)errorCode] forKey:@"error"];
     
-    [self returnJSonWithName:@"onContactInvited" dictionary:dict];
+    [self returnJSonWithName:@"onDisconnected" dictionary:dict];
 }
 
 
 -(void)didRemovedFromServer{
     [[EaseMob sharedInstance].chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
-        if (!error && info) {
-            [self disconnectedError:1];
-        }
+       
     } onQueue:nil];
-    
+    [self disconnectedError:1];
 }
 
 -(void)didLoginFromOtherDevice{
     [[EaseMob sharedInstance].chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
-        if (!error && info) {
-            [self disconnectedError:2];
-        }
+       
     } onQueue:nil];
-    
+    [self disconnectedError:2];
 }
 
 - (void)didConnectionStateChanged:(EMConnectionState)connectionState{
     if (connectionState == eEMConnectionDisconnected){
         [self disconnectedError:3];
+ 
     }
 }
  /*
@@ -474,7 +471,7 @@
         isGroup =YES;
     }
     
-    EMChatVideo *videoChat = [[EMChatVideo alloc] initWithFile:[voiceData objectForKey:@"filePath"] displayName:[voiceData objectForKey:@"displayName"]];
+    EMChatVideo *videoChat = [[EMChatVideo alloc] initWithFile:[self absPath:[voiceData objectForKey:@"filePath"]] displayName:[voiceData objectForKey:@"displayName"]];
     EMVideoMessageBody *body = [[EMVideoMessageBody alloc] initWithChatObject:videoChat];
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[voiceData objectForKey:@"username"] bodies:@[body]];
@@ -504,7 +501,7 @@
         
         isGroup =YES;
     }
-    UIImage  *img = [UIImage imageWithContentsOfFile:[pictureData objectForKey:@"filePath"]];
+    UIImage  *img = [UIImage imageWithContentsOfFile:[self absPath:[pictureData objectForKey:@"filePath"]]];
     
     EMChatImage *imgChat = [[EMChatImage alloc] initWithUIImage:img displayName:[pictureData objectForKey:@"displayName"]];
     EMImageMessageBody *body = [[EMImageMessageBody alloc] initWithChatObject:imgChat];
@@ -570,7 +567,7 @@
     }
     
     
-    EMChatFile *fileChat = [[EMChatFile alloc] initWithFile:[fileData objectForKey:@"filePath"] displayName:[fileData objectForKey:@"displayName"]];
+    EMChatFile *fileChat = [[EMChatFile alloc] initWithFile:[self absPath:[fileData objectForKey:@"filePath"]] displayName:[fileData objectForKey:@"displayName"]];
     EMFileMessageBody *body = [[EMFileMessageBody alloc] initWithChatObject:fileChat];
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[fileData objectForKey:@"username"] bodies:@[body]];

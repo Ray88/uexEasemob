@@ -113,14 +113,14 @@
 
 
     
-    [result setObject:message.from forKey:@"from"];
-    [result setObject:message.to forKey:@"to"];
-    [result setObject:message.messageId forKey:@"messageId"];
-    [result setObject:[NSString stringWithFormat:@"%lld",message.timestamp] forKey:@"messageTime"];
-    [result setObject:message.isDeliveredAcked?@"1":@"0" forKey:@"isDelievered"];
-    [result setObject:message.isReadAcked?@"1":@"0" forKey:@"isAcked"];
-    [result setObject:message.isRead?@"1":@"0" forKey:@"isRead"];
-    [result setObject:message.isGroup?@"1":@"0" forKey:@"isGroup"];
+    [result setValue:message.from forKey:@"from"];
+    [result setValue:message.to forKey:@"to"];
+    [result setValue:message.messageId forKey:@"messageId"];
+    [result setValue:[NSString stringWithFormat:@"%lld",message.timestamp] forKey:@"messageTime"];
+    [result setValue:message.isDeliveredAcked?@"1":@"0" forKey:@"isDelievered"];
+    [result setValue:message.isReadAcked?@"1":@"0" forKey:@"isAcked"];
+    [result setValue:message.isRead?@"1":@"0" forKey:@"isRead"];
+    [result setValue:message.isGroup?@"1":@"0" forKey:@"isGroup"];
     NSString *type=@"";
     NSMutableDictionary *bodyDict = [NSMutableDictionary dictionary];
     id<IEMMessageBody> msgBody = message.messageBodies.firstObject;
@@ -131,7 +131,7 @@
             // 收到的文字消息
             type = @"text";
             NSString *txt = ((EMTextMessageBody *)msgBody).text;
-            [bodyDict setObject:txt forKey:@"text"];
+            [bodyDict setValue:txt forKey:@"text"];
         }
             break;
         case eMessageBodyType_Image:
@@ -139,11 +139,11 @@
             // 得到一个图片消息body
             type =@"img";
             EMImageMessageBody *body = ((EMImageMessageBody *)msgBody);
-            [bodyDict setObject:body.remotePath forKey:@"remotePath"];
-            [bodyDict setObject:body.secretKey forKey:@"secretKey"];
-            [bodyDict setObject:body.thumbnailRemotePath forKey:@"thumbnailRemotePath"];
-            [bodyDict setObject:body.thumbnailSecretKey forKey:@"thumbnailSecretKey"];
-            [bodyDict setObject:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:body.remotePath forKey:@"remotePath"];
+            [bodyDict setValue:body.secretKey forKey:@"secretKey"];
+            [bodyDict setValue:body.thumbnailRemotePath forKey:@"thumbnailRemotePath"];
+            [bodyDict setValue:body.thumbnailSecretKey forKey:@"thumbnailSecretKey"];
+            [bodyDict setValue:body.displayName forKey:@"displayName"];
            
         }
             break;
@@ -151,9 +151,9 @@
         {
             type = @"location";
             EMLocationMessageBody *body = (EMLocationMessageBody *)msgBody;
-            [bodyDict setObject:[NSString stringWithFormat:@"%f",body.latitude] forKey:@"latitude"];
-            [bodyDict setObject:[NSString stringWithFormat:@"%f",body.longitude] forKey:@"longitude"];
-            [bodyDict setObject:body.address forKey:@"address"];
+            [bodyDict setValue:[NSString stringWithFormat:@"%f",body.latitude] forKey:@"latitude"];
+            [bodyDict setValue:[NSString stringWithFormat:@"%f",body.longitude] forKey:@"longitude"];
+            [bodyDict setValue:body.address forKey:@"address"];
 
         }
             break;
@@ -162,9 +162,9 @@
             // 音频sdk会自动下载
             type = @"audio";
             EMVoiceMessageBody *body = (EMVoiceMessageBody *)msgBody;
-            [bodyDict setObject:body.remotePath forKey:@"remotePath"];
-            [bodyDict setObject:body.secretKey forKey:@"secretKey"];
-            [bodyDict setObject:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:body.remotePath forKey:@"remotePath"];
+            [bodyDict setValue:body.secretKey forKey:@"secretKey"];
+            [bodyDict setValue:body.displayName forKey:@"displayName"];
         }
             break;
         case eMessageBodyType_Video:
@@ -172,19 +172,19 @@
             type = @"video";
             EMVideoMessageBody *body = (EMVideoMessageBody *)msgBody;
             
-            [bodyDict setObject:body.remotePath forKey:@"remotePath"];
-            [bodyDict setObject:body.secretKey forKey:@"secretKey"];
-            [bodyDict setObject:body.thumbnailRemotePath forKey:@"thumbnailRemotePath"];
-            [bodyDict setObject:body.thumbnailSecretKey forKey:@"thumbnailSecretKey"];
-            [bodyDict setObject:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:body.remotePath forKey:@"remotePath"];
+            [bodyDict setValue:body.secretKey forKey:@"secretKey"];
+            [bodyDict setValue:body.thumbnailRemotePath forKey:@"thumbnailRemotePath"];
+            [bodyDict setValue:body.thumbnailSecretKey forKey:@"thumbnailSecretKey"];
+            [bodyDict setValue:body.displayName forKey:@"displayName"];
         }
             break;
         case eMessageBodyType_File:
         {
             EMFileMessageBody *body = (EMFileMessageBody *)msgBody;
-            [bodyDict setObject:body.remotePath forKey:@"remotePath"];
-            [bodyDict setObject:body.secretKey forKey:@"secretKey"];
-                        [bodyDict setObject:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:body.remotePath forKey:@"remotePath"];
+            [bodyDict setValue:body.secretKey forKey:@"secretKey"];
+                        [bodyDict setValue:body.displayName forKey:@"displayName"];
         }
             break;
             
@@ -192,13 +192,13 @@
         {
             type = @"cmd";
             EMCommandMessageBody *body = (EMCommandMessageBody *)msgBody;
-            [bodyDict setObject:body.action forKey:@"actiom"];
+            [bodyDict setValue:body.action forKey:@"action"];
         }
         default:
             break;
     }
-    [result setObject:type forKey:@"messageType"];
-    [result setObject:bodyDict forKey:@"messageBody"];
+    [result setValue:type forKey:@"messageType"];
+    [result setValue:bodyDict forKey:@"messageBody"];
     
     return result;
 }
@@ -207,8 +207,8 @@
     
 
     NSMutableDictionary *result =[NSMutableDictionary dictionary];
-    [result setObject:conversation.chatter forKey:@"chatter"];
-    [result setObject:conversation.isGroup?@"1":@"0" forKey:@"isGroup"];
+    [result setValue:conversation.chatter forKey:@"chatter"];
+    [result setValue:conversation.isGroup?@"1":@"0" forKey:@"isGroup"];
 
     NSMutableArray *msgList = [NSMutableArray arrayWithCapacity:1];
     NSArray *messages = [conversation loadAllMessages];
@@ -217,7 +217,7 @@
     }
 
     if([msgList count]>0){
-        [result setObject:msgList forKey:@"messages"];
+        [result setValue:msgList forKey:@"messages"];
 
     }
     
@@ -232,11 +232,11 @@
 //转换EMGroup对象为字典
 - (NSMutableDictionary *)convertEMGroupToDict:(EMGroup *)group{
     NSMutableDictionary *result =[NSMutableDictionary dictionary];
-    [result setObject:group.groupSubject forKey:@"groupSubject"];
-    [result setObject:group.members forKey:@"members"];
-    [result setObject:group.owner forKey:@"owner"];
-    [result setObject:group.isPushNotificationEnabled?@"1":@"0" forKey:@"isPushNotificationEnabled"];
-    [result setObject:group.isBlocked?@"1":@"0" forKey:@"isBlocked"];
+    [result setValue:group.groupSubject forKey:@"groupSubject"];
+    [result setValue:group.members forKey:@"members"];
+    [result setValue:group.owner forKey:@"owner"];
+    [result setValue:group.isPushNotificationEnabled?@"1":@"0" forKey:@"isPushNotificationEnabled"];
+    [result setValue:group.isBlocked?@"1":@"0" forKey:@"isBlocked"];
     NSString *isPublic =@"";
     NSString *allowInvites =@"";
     NSString *membersOnly =@"";
@@ -277,11 +277,12 @@
         default:
             break;
     }
-    [result setObject:isPublic forKey:@"isPublic"];
-    [result setObject:allowInvites forKey:@"allowInvites"];
-    [result setObject:membersOnly forKey:@"membersOnly"];
-    [result setObject:[NSString stringWithFormat: @"%ld", (long)group.groupSetting.groupMaxUsersCount] forKey:@"groupMaxUsersCount"];
-    [result setObject:[NSString stringWithFormat: @"%ld", (long)group.groupSetting.groupStyle] forKey:@"groupStyle"];
+    [result setValue:group.groupId forKey:@"groupId"];
+    [result setValue:isPublic forKey:@"isPublic"];
+    [result setValue:allowInvites forKey:@"allowInvites"];
+    [result setValue:membersOnly forKey:@"membersOnly"];
+    [result setValue:[NSString stringWithFormat: @"%ld", (long)group.groupSetting.groupMaxUsersCount] forKey:@"groupMaxUsersCount"];
+    [result setValue:[NSString stringWithFormat: @"%ld", (long)group.groupSetting.groupStyle] forKey:@"groupStyle"];
     
     
         return result;
