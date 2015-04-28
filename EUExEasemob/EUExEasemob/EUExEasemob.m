@@ -310,14 +310,14 @@
 
 
 -(void)didRemovedFromServer{
-    [[EaseMob sharedInstance].chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
+    [self.sharedInstance.chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
        
     } onQueue:nil];
     [self disconnectedError:1];
 }
 
 -(void)didLoginFromOtherDevice{
-    [[EaseMob sharedInstance].chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
+    [self.sharedInstance.chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
        
     } onQueue:nil];
     [self disconnectedError:2];
@@ -478,7 +478,7 @@
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-    NSLog(@"testsendvoice");
+   // NSLog(@"testsendvoice");
     
 }
 /*
@@ -670,11 +670,11 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     
     // 收到消息时，播放音频
     if(self.isPlaySound){
-        [[EaseMob sharedInstance].deviceManager asyncPlayNewMessageSound];
+        [self.sharedInstance.deviceManager asyncPlayNewMessageSound];
     }
     // 收到消息时，震动
     if(self.isPlayVibration){
-        [[EaseMob sharedInstance].deviceManager asyncPlayVibration];
+        [self.sharedInstance.deviceManager asyncPlayVibration];
     }
 }
 /*
@@ -1010,7 +1010,7 @@ var chatterInfo = {
 */
 -(void)getContactUserNames:(NSMutableArray*)array{
      NSMutableArray *usernames = [NSMutableArray arrayWithCapacity:1];
-    [[EaseMob sharedInstance].chatManager asyncFetchBuddyListWithCompletion:^(NSArray *buddyList, EMError *error) {
+    [self.sharedInstance.chatManager asyncFetchBuddyListWithCompletion:^(NSArray *buddyList, EMError *error) {
         if (!error) {
             for(EMBuddy  *buddy in buddyList){
                 if(buddy.followState == 3){
@@ -1500,7 +1500,7 @@ var chatterInfo = {
         
     }else{
         
-        [[EaseMob sharedInstance].chatManager asyncFetchMyGroupsListWithCompletion:^(NSArray *groups, EMError *error) {
+        [self.sharedInstance.chatManager asyncFetchMyGroupsListWithCompletion:^(NSArray *groups, EMError *error) {
             if (!error) {
                 [dict setObject:@"0" forKey:@"result"];
                 for (EMGroup  *group in groups){
@@ -1511,11 +1511,12 @@ var chatterInfo = {
             }else{
                 [dict setObject:@"1" forKey:@"result"];
             }
+            [self returnJSonWithName:@"cbGetGroupsFromServer" dictionary:dict];
         } onQueue:nil];
        
     }
     
-    [self returnJSonWithName:@"cbGetGroupsFromServer" dictionary:dict];
+    
     
     
 }
