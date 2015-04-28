@@ -1,9 +1,12 @@
 #uexEasemob插件接口文档
-2015-04-17  初稿by:刘康立
-2015-04-20	新增[2.12][2.13]方法
-			修改了[2.1]的回调值的结构
-			统一了Android和iOS返回的json对象的结构，对附录做了大量修订
+2015-04-17  初稿
 
+2015-04-20	新增[2.12][2.13]方法;
+			修改了[2.1]的回调值的结构;
+			统一了Android和iOS返回的json对象的结构，对附录做了大量修订。
+			
+2015-04-28 新增方法[3.15]获取聊天对象信息及其回调[3.16];
+			[4.6][5.14]改用异步方法获得回调。
 ###[1]Initialization
 ***
 #####[1.1] initEasemob(param) //初始化
@@ -262,6 +265,19 @@ var param = {
 }
 #####[3.14]deleteAllConversation();//删除所有会话记录(包括本地)
 
+##### [3.15]getChatterInfo();//获取聊天对象信息
+
+##### [3.16]cbGetChatterInfo(param);//获取聊天对象信息回调
+	param为list<chatteInfo>,一个由chatterInfo结构组成的数组。
+		
+var chatterInfo = {
+
+	chatter;// 联系人的username或群组的groupId
+	groupName;// 群组名（仅群组有此值）
+	isGroup;//是否为群组 1-是 2-否
+	unreadMsgCount;//未读消息数
+	lastMsg;//EMMessage格式的json字符串，最后一条消息
+}
 ###[4]Friend
 ***
 #####[4.1]onContactAdded(param)//新增联系人监听（仅Android）
@@ -590,48 +606,6 @@ var param = {
 #####[6.5]rejectCall();//拒绝接听
 #####[6.6]endCall();//挂断通话
 
-###[7]APNs(仅iOS)
-***
-#####[7.1]registerRemoteNotification();//注册Apns推送
-#####[7.2]cbRegisterRemoteNotification(param);//回调
-var param{
-
-	result;//1-成功 2-失败
-	errorInfo;//注册失败时的推送信息
-}
-
-#####[7.3]updatePushOptions(param);//设置apns全局属性
-var param{
-
-	nickname;//昵称
-	noDisturbing;//是否开启免打扰模式 1-开启 2-不开启
-	noDisturbingStartH;//免打扰模式开始时间  小时（int）
-	noDisturbingEndH;//免打扰模式结束时间  小时（int）
-}
-#####[7.4]cbUpdatePushOptions(param);//设置apns全局属性回调
-var param{
-
-	nickname;//昵称
-	noDisturbing;//是否开启免打扰模式 1-开启 2-不开启
-	noDisturbingStartH;//免打扰模式开始时间  小时（int）
-	noDisturbingEndH;//免打扰模式结束时间  小时（int）
-}
-
-	说明：updatePushOptions全为可选参数，当传入空值时，即可通过回调获得当前apns全局属性
-
-
-#####[7.5]ignoreGroupPushNotification(param)://设置指定群组是否接收
-var param{
-
-	groupId;//指定的群组Id
-	isIgnore;//1-屏蔽  2-取消屏蔽
-}
-
-#####[7.6]cbIgnoreGroupPushNotification(param)://回调
-var param{
-
-	groups;//已屏蔽接收推送消息的群列表
-}
 
 
 ##附录

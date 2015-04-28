@@ -66,6 +66,11 @@
     
 }
 -(void)callBack:(NSString *)str{
+    [self performSelector:@selector(delayedCallBack:) withObject:str afterDelay:0.01];
+    //[meBrwView stringByEvaluatingJavaScriptFromString:str];
+}
+
+-(void)delayedCallBack:(NSString *)str{
     [meBrwView stringByEvaluatingJavaScriptFromString:str];
 }
 

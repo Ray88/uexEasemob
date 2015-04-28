@@ -864,9 +864,81 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
  */
 -(void)deleteAllConversation:(NSMutableArray*)array{
     [self.sharedInstance.chatManager removeAllConversationsWithDeleteMessages:YES append2Chat:YES];
-    NSLog(@"deleteAllConversation");
+   // NSLog(@"deleteAllConversation");
 }
+/*
+##### [3.15]getChatterInfo();//获取聊天对象信息
 
+##### [3.16]cbGetChatterInfo(param);//获取聊天对象信息回调
+param为list<chatteInfo>,一个由chatterInfo结构组成的数组。
+
+var chatterInfo = {
+    
+    chatter;// 联系人的username或群组的groupId
+    groupName;// 群组名（仅群组有此值）
+    isGroup;//是否为群组 1-是 2-否
+    unreadMsgCount;//未读消息数
+    lastMsg;//EMMessage格式的json字符串，最后一条消息
+}*/
+
+-(void) getChatterInfo:(NSMutableArray *)array{
+    NSMutableArray *usernamelist = [NSMutableArray array];
+    EMError *error=nil;
+    NSArray *buddyList = [self.sharedInstance.chatManager fetchBuddyListWithError:&error];
+    
+    if (!error) {
+        for(EMBuddy  *buddy in buddyList){
+            if(buddy.followState == 3){
+                [usernamelist addObject:buddy.username];
+            }
+        }
+        
+        
+    }else{
+        return;
+    }
+
+    error = nil;
+    NSMutableArray *grouplist = [NSMutableArray array];
+    
+    NSArray *groups = [self.sharedInstance.chatManager fetchMyGroupsListWithError:&error];
+    if (!error) {
+        
+        for (EMGroup  *group in groups){
+            [grouplist addObject:group];
+        }
+        
+    }else{
+        return;
+    }
+
+    
+    NSMutableArray *result =[NSMutableArray array];
+    for(NSString *username in usernamelist){
+        NSMutableDictionary *chatter =[NSMutableDictionary dictionary];
+        EMConversation *conversation = [self.sharedInstance.chatManager conversationForChatter:username isGroup:NO];
+        [chatter setValue:[self convertEMMessageToDict:[conversation latestMessage]]  forKey:@"lastMsg"];
+        [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+        [chatter setValue:username forKey:@"chatter"];
+        [chatter setValue:@"2" forKey:@"isGroup"];
+        [result addObject:chatter];
+    }
+    for(EMGroup *group in grouplist){
+        NSMutableDictionary *chatter =[NSMutableDictionary dictionary];
+        EMConversation *conversation = [self.sharedInstance.chatManager conversationForChatter:group.groupId isGroup:YES];
+        [chatter setValue:[self convertEMMessageToDict:[conversation latestMessage]]  forKey:@"lastMsg"];
+        [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+        [chatter setValue:group.groupId forKey:@"chatter"];
+        [chatter setValue:group.groupSubject forKey:@"groupName"];
+        [chatter setValue:@"1" forKey:@"isGroup"];
+        [result addObject:chatter];
+    }
+    
+    
+    [self returnJSonWithName:@"cbGetChatterInfo" dictionary:result];
+    
+    
+}
  /*
  ###[4]Friend
  ***
@@ -937,18 +1009,21 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
  }
 */
 -(void)getContactUserNames:(NSMutableArray*)array{
-    
-    EMError *error = nil;
-    NSArray *buddyList = [self.sharedInstance.chatManager fetchBuddyListWithError:&error];
-    
-    NSMutableArray *usernames = [NSMutableArray arrayWithCapacity:1];
-    for(EMBuddy  *buddy in buddyList){
-        if(buddy.followState == 3){
-            [usernames addObject:buddy.username];
+     NSMutableArray *usernames = [NSMutableArray arrayWithCapacity:1];
+    [[EaseMob sharedInstance].chatManager asyncFetchBuddyListWithCompletion:^(NSArray *buddyList, EMError *error) {
+        if (!error) {
+            for(EMBuddy  *buddy in buddyList){
+                if(buddy.followState == 3){
+                    [usernames addObject:buddy.username];
+                }
+            }
+            [self returnJSonWithName:@"cbGetContactUserNames" dictionary:usernames];
+
         }
-    }
+    } onQueue:nil];
     
-    [self returnJSonWithName:@"cbGetContactUserNames" dictionary:usernames];
+
+    
 }
 
 
@@ -1409,7 +1484,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     
     id getGroup =[self getDataFromJson:array[0]];
     
-    EMError *error = nil;
+
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
     NSArray *groups;
     NSMutableArray *grouplist=[NSMutableArray arrayWithCapacity:10] ;
@@ -1425,17 +1500,19 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
         
     }else{
         
-        groups = [self.sharedInstance.chatManager fetchMyGroupsListWithError:&error];
-        if (!error) {
-            [dict setObject:@"0" forKey:@"result"];
-            for (EMGroup  *group in groups){
-                [grouplist addObject:[self convertEMGroupToDict:group]];
+        [[EaseMob sharedInstance].chatManager asyncFetchMyGroupsListWithCompletion:^(NSArray *groups, EMError *error) {
+            if (!error) {
+                [dict setObject:@"0" forKey:@"result"];
+                for (EMGroup  *group in groups){
+                    [grouplist addObject:[self convertEMGroupToDict:group]];
+                }
+                [dict setObject:grouplist forKey:@"grouplist"];
+                
+            }else{
+                [dict setObject:@"1" forKey:@"result"];
             }
-            [dict setObject:grouplist forKey:@"grouplist"];
-            
-        }else{
-            [dict setObject:@"1" forKey:@"result"];
-        }
+        } onQueue:nil];
+       
     }
     
     [self returnJSonWithName:@"cbGetGroupsFromServer" dictionary:dict];
