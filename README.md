@@ -1,4 +1,19 @@
 #uexEasemob插件接口文档
+
+##简介：
+***
+本插件是基于环信API封装的AppCan平台的插件模块，用户可以使用本插件实现基本的即时通讯功能，包括——
+
+单聊功能：支持发送语音，图片，表情，文字，位置，名片，附件；
+
+群聊功能：支持500人到2000人大群，拥有完善的群组权限管理；
+
+实时语音 ：基于IP网络的点对点实时语音，适应低带宽要求；
+
+
+
+##changelog
+***
 2015-04-17  初稿
 
 2015-04-20	新增[2.12][2.13]方法;
@@ -7,7 +22,10 @@
 			
 2015-04-28 新增方法[3.15]获取聊天对象信息及其回调[3.16];
 			[4.6][5.14]改用异步方法获得回调。
-			
+
+2015-05-04 新增方法[1.12]设置是否自动登录;
+		    现在iOS也支持回调 [1.10]onConnected 了。
+##API		
 ###[1]Initialization
 ***
 #####[1.1] initEasemob(param) //初始化
@@ -74,14 +92,19 @@ var param = {
 	isLoggedIn://当前是否已有登录用户  1-是 2-否
 	isConnected://是否连上聊天服务器   1-是 2-否
 }
-#####[1.10]onConnected();//已连接上（仅Android可用）
+#####[1.10]onConnected();//已连接上
 #####[1.11]onDisconnected(param)//链接断开
 var param = {
 
 	error:,//1-账号被移除，2-账号其他设备登陆，3-连接不到聊天服务器，4-当前网络不可用 
 };
 
+#####[1.12]setIsAutoLoginEnabled(param);//设置是否自动登录
+var param={
 
+	isAutoLoginEnabled://是否自动登录  1-是 2-否
+
+}
 ###[2]Message
 ***
 #####[2.1]onNewMessage（param）//收到新消息监听
@@ -269,7 +292,7 @@ var param = {
 ##### [3.15]getChatterInfo();//获取聊天对象信息
 
 ##### [3.16]cbGetChatterInfo(param);//获取聊天对象信息回调
-	param为list<chatteInfo>,一个由chatterInfo结构组成的数组。
+	param为list<chatterInfo>,一个由chatterInfo结构组成的数组。
 		
 var chatterInfo = {
 

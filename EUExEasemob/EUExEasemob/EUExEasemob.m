@@ -159,6 +159,8 @@
         
         
         if (!error && loginInfo) {
+
+            [self returnJSonWithName:@"onConnected" dictionary:nil];
             [dict setObject:@"1" forKey:@"result"];
             [dict setObject:@"登录成功" forKey:@"message"];
             self.apnsOptions =[self.sharedInstance.chatManager pushNotificationOptions];
@@ -171,29 +173,35 @@
         [self returnJSonWithName:@"cbLogin" dictionary:dict];
     } onQueue:nil];
 }
+//自动登录回调
 
+- (void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
+     if (!error && loginInfo) {
+         [self returnJSonWithName:@"onConnected" dictionary:nil];
 
+     }
+}
  /*
  #####[1.4]logout() //退出登录
   */
  -(void)logout:(NSMutableArray *)array{
 
- [self.sharedInstance.chatManager asyncLogoffWithUnbindDeviceToken:YES completion:^(NSDictionary *info, EMError *error) {
+     [self.sharedInstance.chatManager asyncLogoffWithUnbindDeviceToken:YES completion:^(NSDictionary *info, EMError *error) {
  
- NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
- if (!error && !info) {
+         NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
+         if (!error && !info) {
  
  
- [dict setObject:@"1" forKey:@"result"];
- [dict setObject:@"登出成功" forKey:@"message"];
- }else{
- [dict setObject:@"2" forKey:@"result"];
- [dict setObject:@"登出失败" forKey:@"message"];;
- }
- [self returnJSonWithName:@"cbLogout" dictionary:dict];
+             [dict setObject:@"1" forKey:@"result"];
+             [dict setObject:@"登出成功" forKey:@"message"];
+         }else{
+             [dict setObject:@"2" forKey:@"result"];
+             [dict setObject:@"登出失败" forKey:@"message"];;
+         }
+         [self returnJSonWithName:@"cbLogout" dictionary:dict];
  
- } onQueue:nil];
- }
+     } onQueue:nil];
+}
  /*
  #####[1.5]registerUser(param)//注册
  
@@ -329,6 +337,26 @@
  
     }
 }
+
+/*
+ #####[1.12]setIsAutoLoginEnabled(param);//设置是否自动登录
+ var param={
+ 
+	isAutoLoginEnabled://是否自动登录  1-是 2-否
+ 
+ }
+ 
+ */
+-(void)setIsAutoLoginEnabled:(NSMutableArray *)array{
+    id info =[self getDataFromJson:array[0]];
+    if([[info objectForKey:@"isAutoLoginEnabled"] isEqual:@"1"] ){
+        [self.sharedInstance.chatManager setIsAutoLoginEnabled:YES];
+    }else if([[info objectForKey:@"isAutoLoginEnabled"] isEqual:@"2"] ){
+        [self.sharedInstance.chatManager setIsAutoLoginEnabled:NO];
+    }
+    
+}
+
  /*
  ###[2]Message
  ***
