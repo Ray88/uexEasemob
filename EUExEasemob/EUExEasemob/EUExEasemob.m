@@ -26,6 +26,8 @@
 @property (retain, nonatomic)EMSDKFull * sharedInstanceForCall;
 @property (retain, nonatomic)EMCallSession *call;
 @property (retain, nonatomic)EMPushNotificationOptions *apnsOptions;
+
+
 @property (strong, nonatomic) NSDate *lastPlaySoundDate;
 @property (assign, nonatomic) BOOL isPlaySound;
 @property (assign, nonatomic) BOOL isPlayVibration;
@@ -37,9 +39,14 @@
 
 @implementation EUExEasemob
 
+static UIApplication *app;
+static NSDictionary *opt;
 
-
-
++(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
+    app=application;
+    opt=launchOptions;
+    return YES;
+}
 
 
 -(id)initWithBrwView:(EBrowserView *)eInBrwView{
@@ -102,6 +109,7 @@
         
         
         [self registerEaseMobNotification];//注册回调
+        self.MainBrowserView =meBrwView;
         self.lastPlaySoundDate = [NSDate date];
         self.isPlayVibration = YES;
         self.isPlaySound = YES;
@@ -109,16 +117,21 @@
         self.userSpeaker = YES;
         [self.sharedInstance.chatManager enableDeliveryNotification];//开启消息已送达回执
         self.isInitialized =YES;
+        [self.sharedInstance application:app didFinishLaunchingWithOptions:opt];
+
+        
+
         [self returnJSonWithName:@"cbInit" dictionary:@"init successfully!"];
     }else{
         [self returnJSonWithName:@"cbInit" dictionary:@"you have already initialized"];
     }
-    
 
     
-    
-    
 }
+
+
+
+
 - (void)registerEaseMobNotification{
     [self unRegisterEaseMobNotification];
     // 将self 添加到SDK回调中，以便本类可以收到SDK回调
@@ -173,7 +186,13 @@
         [self returnJSonWithName:@"cbLogin" dictionary:dict];
     } onQueue:nil];
 }
+
 //自动登录回调
+-(void)willAutoLoginWithInfo:(NSDictionary *)loginInfo
+                       error:(EMError *)error{
+       // NSLog(@"willAutoLoginWithInfo");
+}
+
 
 - (void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
      if (!error && loginInfo) {
@@ -221,7 +240,6 @@
  */
 -(void)registerUser:(NSMutableArray *)array{
     id user =[self getDataFromJson:array[0]];
-    NSLog(@"testReg%@",user);
     if(user != nil){
         [self.sharedInstance.chatManager asyncRegisterNewAccount:[user objectForKey:@"username"]
                                                         password:[user objectForKey:@"password"]
@@ -292,10 +310,10 @@
         
         
         
-        
         [dict setObject:userInfo  forKey:@"userInfo"];
     }
-    
+    NSString *autologgin = self.sharedInstance.chatManager.isAutoLoginEnabled?@"1":@"2";
+    [dict setObject:autologgin  forKey:@"isAutoLoginEnabled"];
     [self returnJSonWithName:@"cbGetLoginInfo" dictionary:dict];
     
 }
@@ -499,8 +517,8 @@
         isGroup =YES;
     }
     
-    EMChatVideo *videoChat = [[EMChatVideo alloc] initWithFile:[self absPath:[voiceData objectForKey:@"filePath"]] displayName:[voiceData objectForKey:@"displayName"]];
-    EMVideoMessageBody *body = [[EMVideoMessageBody alloc] initWithChatObject:videoChat];
+    EMChatVoice *voiceChat = [[EMChatVoice alloc] initWithFile:[self absPath:[voiceData objectForKey:@"filePath"]] displayName:[voiceData objectForKey:@"displayName"]];
+    EMVoiceMessageBody *body = [[EMVoiceMessageBody alloc] initWithChatObject:voiceChat];
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[voiceData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
@@ -675,7 +693,7 @@
         [self.sharedInstance.chatManager enableDeliveryNotification];
     }
     
-    NSLog(@"SetNotifyBySoundAndVibrate");
+    //NSLog(@"SetNotifyBySoundAndVibrate");
     
 }
 static const CGFloat kDefaultPlaySoundInterval = 3.0;

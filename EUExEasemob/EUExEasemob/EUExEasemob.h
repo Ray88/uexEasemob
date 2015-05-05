@@ -15,7 +15,7 @@
 @interface EUExEasemob : EUExBase
 
 
-
+@property (nonatomic,strong) EBrowserView *MainBrowserView;
 
 
 

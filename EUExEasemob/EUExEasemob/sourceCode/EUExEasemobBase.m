@@ -71,7 +71,7 @@
 }
 
 -(void)delayedCallBack:(NSString *)str{
-    [meBrwView stringByEvaluatingJavaScriptFromString:str];
+    [self.MainBrowserView stringByEvaluatingJavaScriptFromString:str];
 }
 
 
