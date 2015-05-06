@@ -142,7 +142,7 @@
         case eMessageBodyType_Image:
         {
             // 得到一个图片消息body
-            type =@"img";
+            type =@"image";
             EMImageMessageBody *body = ((EMImageMessageBody *)msgBody);
             [bodyDict setValue:body.remotePath forKey:@"remotePath"];
             [bodyDict setValue:body.secretKey forKey:@"secretKey"];
