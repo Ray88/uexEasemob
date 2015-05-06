@@ -34,6 +34,7 @@
 @property (assign, nonatomic) BOOL messageNotification;
 @property (assign, nonatomic) BOOL userSpeaker;
 @property (assign, nonatomic) BOOL isInitialized;
+@property (copy, nonatomic) NSString *isAutoLoginEnabled;
 @end
 
 
@@ -118,6 +119,10 @@ static NSDictionary *opt;
         [self.sharedInstance.chatManager enableDeliveryNotification];//开启消息已送达回执
         self.isInitialized =YES;
         [self.sharedInstance application:app didFinishLaunchingWithOptions:opt];
+        if([initInfo objectForKey:@"isAutoLoginEnabled"]){
+            self.isAutoLoginEnabled =[initInfo objectForKey:@"isAutoLoginEnabled"];
+        }
+        
 
         
 
@@ -177,6 +182,11 @@ static NSDictionary *opt;
             [dict setObject:@"1" forKey:@"result"];
             [dict setObject:@"登录成功" forKey:@"message"];
             self.apnsOptions =[self.sharedInstance.chatManager pushNotificationOptions];
+            if([self.isAutoLoginEnabled isEqual:@"1"] ){
+                [self.sharedInstance.chatManager setIsAutoLoginEnabled:YES];
+            }else if([self.isAutoLoginEnabled isEqual:@"2"] ){
+                [self.sharedInstance.chatManager setIsAutoLoginEnabled:NO];
+            }
             
         }else{
             [dict setObject:@"2" forKey:@"result"];
@@ -356,24 +366,8 @@ static NSDictionary *opt;
     }
 }
 
-/*
- #####[1.12]setIsAutoLoginEnabled(param);//设置是否自动登录
- var param={
- 
-	isAutoLoginEnabled://是否自动登录  1-是 2-否
- 
- }
- 
- */
--(void)setIsAutoLoginEnabled:(NSMutableArray *)array{
-    id info =[self getDataFromJson:array[0]];
-    if([[info objectForKey:@"isAutoLoginEnabled"] isEqual:@"1"] ){
-        [self.sharedInstance.chatManager setIsAutoLoginEnabled:YES];
-    }else if([[info objectForKey:@"isAutoLoginEnabled"] isEqual:@"2"] ){
-        [self.sharedInstance.chatManager setIsAutoLoginEnabled:NO];
-    }
-    
-}
+
+
 
  /*
  ###[2]Message

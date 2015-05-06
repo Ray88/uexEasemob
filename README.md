@@ -1,4 +1,10 @@
+
+
 #uexEasemob插件接口文档
+
+
+
+
 
 ##简介：
 ***
@@ -9,6 +15,7 @@
 群聊功能：支持500人到2000人大群，拥有完善的群组权限管理；
 
 实时语音 ：基于IP网络的点对点实时语音，适应低带宽要求；
+
 
 
 
@@ -37,9 +44,15 @@
 2015-05-05
 
 * 更新环信iOS SDK版本至V2.1.6(2015-04-30版)，部分代码做了优化以支持此新版本;
-* 现在所有的回调函数都会返回给进行init的那个网页了;
+* 现在所有的回调函数都会返回给进行 [1.1]初始化 操作的那个网页了。
 * [1.9]现在也会返回 是否开启自动登录 的信息了。
-			
+
+2015-05-06
+
+* 删去方法 [1.12]设置是否自动登录 ，改为在 [1.1]初始化 中添加相关参数
+
+
+		
 ##API		
 ###[1]Initialization
 ***
@@ -47,12 +60,16 @@
 
   var param{
   
-	appKey:,//区别app的标识       
-	apnsCertName:,//iOS中推送证书名称
-    
-	//Android 中此参数需要在AndroidManifest.xml中配置
+	appKey:,//区别app的标识（仅iOS）     
+	apnsCertName:,//iOS中推送证书名称（仅iOS）
+	isAutoLoginEnabled:,//可选参数 是否开启自动登录功能 1-开启 2-关闭
+     
+	
 }
 
+	注：Android中 初始化需要在AndroidManifest.xml中配置；
+	   自动登录功能Android SDK 默认开启，iOS SDK默认关闭。
+	
 #####[1.2]login(param) //登陆
 
 var param = {
@@ -115,12 +132,7 @@ var param = {
 	error:,//1-账号被移除，2-账号其他设备登陆，3-连接不到聊天服务器，4-当前网络不可用 
 };
 
-#####[1.12]setIsAutoLoginEnabled(param);//设置是否自动登录
-var param={
 
-	isAutoLoginEnabled://是否自动登录  1-是 2-否
-
-}
 ###[2]Message
 ***
 #####[2.1]onNewMessage（param）//收到新消息监听
@@ -762,3 +774,4 @@ membersOnly|需要申请和验证才能加入
 -keep class * implements java.io.Serializable {*;}
 ##---------------End: proguard configuration for Gson  ----------
 ~~~
+
