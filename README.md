@@ -1,5 +1,16 @@
 
 
+
+由于环信官方SDK太大，无法上传，于是另存至百度网盘http://pan.baidu.com/s/1i3nFPSp
+
+下载EaseMobSDK V2.1.6.zip，解压后覆盖EUExEasemob/sourceCode/下的同名文件夹即可正常编译。
+
+
+
+
+***
+
+
 #uexEasemob插件接口文档
 
 
