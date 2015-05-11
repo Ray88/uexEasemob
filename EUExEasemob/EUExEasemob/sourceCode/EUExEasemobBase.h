@@ -12,6 +12,7 @@
 #import "EaseMob.h"
 #import "EUExEasemob.h"
 #import "EUExBaseDefine.h"
+#import "EUtility.h"
 
 
 

@@ -71,7 +71,7 @@
 }
 
 -(void)delayedCallBack:(NSString *)str{
-    [self.MainBrowserView stringByEvaluatingJavaScriptFromString:str];
+    [EUtility evaluatingJavaScriptInRootWnd:str];
 }
 
 
@@ -218,7 +218,10 @@
     NSMutableArray *msgList = [NSMutableArray arrayWithCapacity:1];
     NSArray *messages = [conversation loadAllMessages];
     for(EMMessage *msg in messages){
+        
         [msgList addObject:[self convertEMMessageToDict:msg]];
+
+        
     }
 
     if([msgList count]>0){

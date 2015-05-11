@@ -110,7 +110,7 @@ static NSDictionary *opt;
         
         
         [self registerEaseMobNotification];//注册回调
-        self.MainBrowserView =meBrwView;
+
         self.lastPlaySoundDate = [NSDate date];
         self.isPlayVibration = YES;
         self.isPlaySound = YES;
@@ -187,6 +187,7 @@ static NSDictionary *opt;
             }else if([self.isAutoLoginEnabled isEqual:@"2"] ){
                 [self.sharedInstance.chatManager setIsAutoLoginEnabled:NO];
             }
+            [self.sharedInstance.chatManager importDataToNewDatabase];
             
         }else{
             [dict setObject:@"2" forKey:@"result"];
@@ -206,6 +207,7 @@ static NSDictionary *opt;
 
 - (void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
      if (!error && loginInfo) {
+         [self.sharedInstance.chatManager importDataToNewDatabase];
          [self returnJSonWithName:@"onConnected" dictionary:nil];
 
      }
@@ -386,7 +388,7 @@ static NSDictionary *opt;
  */
 -(void)didReceiveMessage:(EMMessage *)message{
     
-    [self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:NO];
+    [self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
     NSMutableDictionary *dict = [self convertEMMessageToDict:message];
     
     [self playSoundAndVibration];
@@ -409,7 +411,7 @@ static NSDictionary *opt;
  }
  */
 - (void)didReceiveCmdMessage:(EMMessage *)cmdMessage{
-    [self.sharedInstance.chatManager insertMessagesToDB:@[cmdMessage] forChatter:cmdMessage.conversationChatter append2Chat:NO];
+    [self.sharedInstance.chatManager insertMessagesToDB:@[cmdMessage] forChatter:cmdMessage.conversationChatter append2Chat:YES];
     
     NSMutableDictionary *dict=[NSMutableDictionary dictionaryWithCapacity:3];
     NSDictionary *dictMessage =[self convertEMMessageToDict:cmdMessage];
@@ -488,6 +490,7 @@ static NSDictionary *opt;
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+
     
 }
 /*
@@ -518,7 +521,8 @@ static NSDictionary *opt;
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-   // NSLog(@"testsendvoice");
+
+
     
 }
 /*
@@ -550,6 +554,7 @@ static NSDictionary *opt;
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+
 }
 /*
  
@@ -584,6 +589,7 @@ static NSDictionary *opt;
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+
 }
 
 /*
@@ -614,6 +620,7 @@ static NSDictionary *opt;
     message.isGroup = isGroup; // 设置是否是群聊
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+
 }
 /*
  #####[2.10]sendCmdMessage(param)//发送透传消息
@@ -641,8 +648,25 @@ static NSDictionary *opt;
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[cmdMsgData objectForKey:@"toUsername"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+
 }
 
+
+
+- (void)didSendMessage:(EMMessage *)message
+                 error:(EMError *)error{
+    
+
+    if(!error){
+        [self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
+        
+        
+        
+        
+
+    }
+    
+}
 /*
  #####[2.11]setNotifyBySoundAndVibrate(param)//消息提醒相关配置
  var param = {
