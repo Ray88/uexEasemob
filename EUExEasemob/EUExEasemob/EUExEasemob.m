@@ -658,6 +658,16 @@ static NSDictionary *opt;
     
 
     if(!error){
+        if (!message.ext) {
+            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+            [dict setValue:@"YES" forKey:@"isSent"];
+            message.ext = dict;
+
+        }
+        EMConversation *conversation = [self.sharedInstance.chatManager conversationForChatter:message.to isGroup:message.isGroup];
+        [conversation removeMessageWithId:message.messageId];
+         
+
         [self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
         
         
