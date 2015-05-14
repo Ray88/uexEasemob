@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<uexplugins>
+    <plugin
+        uexName="uexEasemob" version ="3.0.7" build="7">
+        <info>7:优化了本地数据库的相关设置</info>
+        <build>6:自动登录功能改在 初始化 中进行设置</build>
+        <build>5:针对新版本做了一些代码优化</build>
+        <build>4:支持自动登录，更新环信iOS SDK版本至V2.1.6</build>
+        <build>3:新增了一个获取聊天对象信息的方法</build>
+        <build>2:修复了回调信息不全引起程序崩溃的bug</build>
+        <build>1:修正了多次初始化会导致程序卡死的bug</build>
+        <build>0:环信(Easemob)插件 for iOS</build>
+
+    </plugin>
+</uexplugins>
