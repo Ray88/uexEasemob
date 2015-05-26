@@ -50,6 +50,9 @@
     <method name="updatePushOptions"></method>
     <method name="ignoreGroupPushNotification"></method>
     <method name="getChatterInfo"></method>
+     <method name="sendVideo"></method>
+     <method name="sendHasReadResponseForMessage"></method>
+     <method name="getMessageById"></method>
 
 
         

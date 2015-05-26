@@ -41,11 +41,9 @@
 @implementation EUExEasemob
 
 static UIApplication *app;
-static NSDictionary *opt;
 
 +(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
     app=application;
-    opt=launchOptions;
     return YES;
 }
 
@@ -59,6 +57,7 @@ static NSDictionary *opt;
 }
 
 -(void)clean{
+/*
     if(self.sharedInstance){
         [self.sharedInstance release];
         self.sharedInstance=nil;
@@ -76,6 +75,7 @@ static NSDictionary *opt;
         self.call=nil;
     }
     self.isInitialized = NO;
+ */
 }
 
 -(void)dealloc{
@@ -98,19 +98,22 @@ static NSDictionary *opt;
  }
  */
 -(void)initEasemob:(NSMutableArray *)array{
+
     if(!self.isInitialized){
         id initInfo =[self getDataFromJson:array[0]];
         self.sharedInstance =[EaseMob sharedInstance];
         self.sharedInstanceForCall = [EMSDKFull sharedInstance];
         
-        
+
         [self.sharedInstance registerSDKWithAppKey:[initInfo objectForKey:@"appKey"]
                                       apnsCertName:[initInfo objectForKey:@"apnsCertName"]
                                        otherConfig:@{kSDKConfigEnableConsoleLogger:[NSNumber numberWithBool:YES]}];
-        
-        
-        [self registerEaseMobNotification];//注册回调
 
+        [self.sharedInstance application:app didFinishLaunchingWithOptions:nil];
+
+        [self registerEaseMobNotification];//注册回调
+        [self setupNotifiers];
+        
         self.lastPlaySoundDate = [NSDate date];
         self.isPlayVibration = YES;
         self.isPlaySound = YES;
@@ -118,11 +121,11 @@ static NSDictionary *opt;
         self.userSpeaker = YES;
         [self.sharedInstance.chatManager enableDeliveryNotification];//开启消息已送达回执
         self.isInitialized =YES;
-        [self.sharedInstance application:app didFinishLaunchingWithOptions:opt];
+
         if([initInfo objectForKey:@"isAutoLoginEnabled"]){
             self.isAutoLoginEnabled =[initInfo objectForKey:@"isAutoLoginEnabled"];
         }
-        
+
 
         
 
@@ -179,8 +182,8 @@ static NSDictionary *opt;
         if (!error && loginInfo) {
 
             [self returnJSonWithName:@"onConnected" dictionary:nil];
-            [dict setObject:@"1" forKey:@"result"];
-            [dict setObject:@"登录成功" forKey:@"message"];
+            [dict setValue:@"1" forKey:@"result"];
+            [dict setValue:@"登录成功" forKey:@"message"];
             self.apnsOptions =[self.sharedInstance.chatManager pushNotificationOptions];
             if([self.isAutoLoginEnabled isEqual:@"1"] ){
                 [self.sharedInstance.chatManager setIsAutoLoginEnabled:YES];
@@ -188,10 +191,10 @@ static NSDictionary *opt;
                 [self.sharedInstance.chatManager setIsAutoLoginEnabled:NO];
             }
             [self.sharedInstance.chatManager importDataToNewDatabase];
-            
+            [_sharedInstance.chatManager loadDataFromDatabase];
         }else{
-            [dict setObject:@"2" forKey:@"result"];
-            [dict setObject:@"登录失败" forKey:@"message"];
+            [dict setValue:@"2" forKey:@"result"];
+            [dict setValue:@"登录失败" forKey:@"message"];
             
         }
         [self returnJSonWithName:@"cbLogin" dictionary:dict];
@@ -207,7 +210,9 @@ static NSDictionary *opt;
 
 - (void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
      if (!error && loginInfo) {
+         self.apnsOptions =[self.sharedInstance.chatManager pushNotificationOptions];
          [self.sharedInstance.chatManager importDataToNewDatabase];
+         [_sharedInstance.chatManager loadDataFromDatabase];
          [self returnJSonWithName:@"onConnected" dictionary:nil];
 
      }
@@ -223,11 +228,11 @@ static NSDictionary *opt;
          if (!error && !info) {
  
  
-             [dict setObject:@"1" forKey:@"result"];
-             [dict setObject:@"登出成功" forKey:@"message"];
+             [dict setValue:@"1" forKey:@"result"];
+             [dict setValue:@"登出成功" forKey:@"message"];
          }else{
-             [dict setObject:@"2" forKey:@"result"];
-             [dict setObject:@"登出失败" forKey:@"message"];;
+             [dict setValue:@"2" forKey:@"result"];
+             [dict setValue:@"登出失败" forKey:@"message"];;
          }
          [self returnJSonWithName:@"cbLogout" dictionary:dict];
  
@@ -258,11 +263,11 @@ static NSDictionary *opt;
                                                   withCompletion:^(NSString *username, NSString *password, EMError *error) {
                                                       NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
                                                       if (!error) {
-                                                          [dict setObject:@"1" forKey:@"result"];
-                                                          [dict setObject:@"注册成功" forKey:@"msg"];
+                                                          [dict setValue:@"1" forKey:@"result"];
+                                                          [dict setValue:@"注册成功" forKey:@"msg"];
                                                       }else{
-                                                          [dict setObject:@"2" forKey:@"result"];
-                                                          [dict setObject:@"注册失败" forKey:@"msg"];
+                                                          [dict setValue:@"2" forKey:@"result"];
+                                                          [dict setValue:@"注册失败" forKey:@"msg"];
                                                       }
                                                       
                                                       
@@ -308,24 +313,24 @@ static NSDictionary *opt;
     
     
     
-    [dict setObject:(self.sharedInstance.chatManager.isConnected?@"1":@"2")   forKey:@"isConnected"];
-    [dict setObject:(self.sharedInstance.chatManager.isLoggedIn?@"1":@"2")  forKey:@"isLoggedIn"];
+    [dict setValue:(self.sharedInstance.chatManager.isConnected?@"1":@"2")   forKey:@"isConnected"];
+    [dict setValue:(self.sharedInstance.chatManager.isLoggedIn?@"1":@"2")  forKey:@"isLoggedIn"];
     if(self.sharedInstance.chatManager.isLoggedIn){
         NSMutableDictionary *userInfo = [self.sharedInstance.chatManager.loginInfo mutableCopy];
         
         
         if ([self.apnsOptions.nickname length]>0){
-            [userInfo setObject:self.apnsOptions.nickname  forKey:@"nickname"];
+            [userInfo setValue:self.apnsOptions.nickname  forKey:@"nickname"];
         }
         
         
         
         
         
-        [dict setObject:userInfo  forKey:@"userInfo"];
+        [dict setValue:userInfo  forKey:@"userInfo"];
     }
     NSString *autologgin = self.sharedInstance.chatManager.isAutoLoginEnabled?@"1":@"2";
-    [dict setObject:autologgin  forKey:@"isAutoLoginEnabled"];
+    [dict setValue:autologgin  forKey:@"isAutoLoginEnabled"];
     [self returnJSonWithName:@"cbGetLoginInfo" dictionary:dict];
     
 }
@@ -341,7 +346,7 @@ static NSDictionary *opt;
  */
 -(void)disconnectedError:(NSInteger)errorCode{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
-    [dict setObject:[NSString stringWithFormat: @"%ld", (long)errorCode] forKey:@"error"];
+    [dict setValue:[NSString stringWithFormat: @"%ld", (long)errorCode] forKey:@"error"];
     
     [self returnJSonWithName:@"onDisconnected" dictionary:dict];
 }
@@ -387,8 +392,8 @@ static NSDictionary *opt;
 	所有离线和在线时接受到的的非透传消息，都通过此回调传递
  */
 -(void)didReceiveMessage:(EMMessage *)message{
-    
-    [self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
+
+    //[self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
     NSMutableDictionary *dict = [self convertEMMessageToDict:message];
     
     [self playSoundAndVibration];
@@ -411,14 +416,14 @@ static NSDictionary *opt;
  }
  */
 - (void)didReceiveCmdMessage:(EMMessage *)cmdMessage{
-    [self.sharedInstance.chatManager insertMessagesToDB:@[cmdMessage] forChatter:cmdMessage.conversationChatter append2Chat:YES];
+    //[self.sharedInstance.chatManager insertMessagesToDB:@[cmdMessage] forChatter:cmdMessage.conversationChatter append2Chat:YES];
     
     NSMutableDictionary *dict=[NSMutableDictionary dictionaryWithCapacity:3];
     NSDictionary *dictMessage =[self convertEMMessageToDict:cmdMessage];
-    [dict setObject:cmdMessage.messageId forKey:@"msgId"];
-    [dict setObject:dictMessage forKey:@"message"];
+    [dict setValue:cmdMessage.messageId forKey:@"msgId"];
+    [dict setValue:dictMessage forKey:@"message"];
     EMCommandMessageBody *body = (EMCommandMessageBody *)cmdMessage.messageBodies.lastObject;
-    [dict setObject:body.action forKey:@"action"];
+    [dict setValue:body.action forKey:@"action"];
     [self playSoundAndVibration];
     [self returnJSonWithName:@"onCmdMessageReceive" dictionary:dict];
 }
@@ -441,8 +446,8 @@ static NSDictionary *opt;
  */
 -(void)didReceiveHasReadResponse:(EMReceipt *)resp{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
-    [dict setObject:resp.chatId forKey:@"msgId"];
-    [dict setObject:resp.from forKey:@"username"];
+    [dict setValue:resp.chatId forKey:@"msgId"];
+    [dict setValue:resp.from forKey:@"username"];
     
     [self returnJSonWithName:@"onAckMessage" dictionary:dict];
 }
@@ -458,8 +463,8 @@ static NSDictionary *opt;
 -(void)didReceiveHasDeliveredResponse:(EMReceipt *)resp{
     
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
-    [dict setObject:resp.chatId forKey:@"msgId"];
-    [dict setObject:resp.from forKey:@"username"];
+    [dict setValue:resp.chatId forKey:@"msgId"];
+    [dict setValue:resp.from forKey:@"username"];
     [self returnJSonWithName:@"onDeliveryMessage" dictionary:dict];
 }
 /*
@@ -469,6 +474,7 @@ static NSDictionary *opt;
 	username:,//单聊时聊天人的userid或者群聊时groupid
 	chatType:,//1-单聊，2-群聊
 	content:,//文本内容
+    ext:,//扩展属性
  }
  */
 -(void)sendText:(NSMutableArray *)array{
@@ -488,8 +494,14 @@ static NSDictionary *opt;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[textData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
-    
+    if([[textData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[textData objectForKey:@"ext"];
+
+    }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+    [txtChat release];
+    [body release];
+    [message release];
 
     
 }
@@ -500,7 +512,7 @@ static NSDictionary *opt;
 	username:,//单聊时聊天人的userid或者群聊时groupid
 	chatType:,//1-单聊，2-群聊
 	filePath:,//语音文件路径
-	length:,//长度(仅Android需要)
+	length:,//长度
 	displayName：//对方接收时显示的文件名（仅iOS需要）
  }
  */
@@ -515,12 +527,28 @@ static NSDictionary *opt;
     }
     
     EMChatVoice *voiceChat = [[EMChatVoice alloc] initWithFile:[self absPath:[voiceData objectForKey:@"filePath"]] displayName:[voiceData objectForKey:@"displayName"]];
+    
+    if([voiceData objectForKey:@"length"]){
+        voiceChat.duration=[[voiceData objectForKey:@"length"] integerValue];
+    }
     EMVoiceMessageBody *body = [[EMVoiceMessageBody alloc] initWithChatObject:voiceChat];
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[voiceData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     
+    
+    
+    if([[voiceData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[voiceData objectForKey:@"ext"];
+        
+    }
+    
+
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+    [voiceChat release];
+    [body release];
+    [message release];
+
 
 
     
@@ -553,8 +581,15 @@ static NSDictionary *opt;
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[pictureData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     
+    if([[pictureData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[pictureData objectForKey:@"ext"];
+        
+    }
+    
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-
+    [imgChat release];
+    [body release];
+    [message release];
 }
 /*
  
@@ -588,8 +623,14 @@ static NSDictionary *opt;
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[locationData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     
+    if([[locationData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[locationData objectForKey:@"ext"];
+        
+    }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-
+    [locChat release];
+    [body release];
+    [message release];
 }
 
 /*
@@ -618,9 +659,14 @@ static NSDictionary *opt;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[fileData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
-    
+    if([[fileData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[fileData objectForKey:@"ext"];
+        
+    }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-
+    [fileChat release];
+    [body release];
+    [message release];
 }
 /*
  #####[2.10]sendCmdMessage(param)//发送透传消息
@@ -647,8 +693,14 @@ static NSDictionary *opt;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[cmdMsgData objectForKey:@"toUsername"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
+    if([[cmdMsgData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+        message.ext=[cmdMsgData objectForKey:@"ext"];
+        
+    }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
-
+    [cmdChat release];
+    [body release];
+    [message release];
 }
 
 
@@ -658,12 +710,7 @@ static NSDictionary *opt;
     
 
     if(!error){
-        if (!message.ext) {
-            NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-            [dict setValue:@"YES" forKey:@"isSent"];
-            message.ext = dict;
 
-        }
         EMConversation *conversation = [self.sharedInstance.chatManager conversationForChatter:message.to isGroup:message.isGroup];
         [conversation removeMessageWithId:message.messageId];
          
@@ -752,17 +799,117 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     }
 }
 /*
- #####[2.12]getMessageById(param)//根据id获取消息记录（仅Android可用）
+ #####[2.12]getMessageById(param)//根据id获取消息记录
  var param = {
  
 	msgId:,//消息ID
  };
- #####[2.13]cbGetMessageById(param)//得到一条消息记录（仅Android可用）
+ 
+ */
+
+/*
+ #####[2.13]cbGetMessageById(param)//得到一条消息记录
  var param = {
  
 	msg:,// EMMessage的json格式对象
  };
-	*/
+*/
+
+-(EMMessage *)getMessage:(NSString *)msgId{
+
+    
+    
+    EMConversation *conversation = [self.sharedInstance.chatManager conversationForChatter:@"appcan" isGroup:NO];
+    EMMessage *message = [conversation loadMessageWithId:msgId];
+    return message;
+}
+
+
+-(void)getMessageById:(NSMutableArray *)array{
+    
+    
+    id info =[self getDataFromJson:array[0]];
+    if ([info objectForKey:@"msgId"]){
+        EMMessage *msg=[self getMessage:[info objectForKey:@"msgId"]];
+        NSDictionary *messageDict=[self convertEMMessageToDict:msg];
+        [self returnJSonWithName:@"cbGetMessageById" dictionary:messageDict];
+    }
+    
+}
+ 
+
+/*
+ 
+ #####[2.14]sendVideo(param)//发送视频
+ var param = {
+	
+	username:,//单聊时聊天人的userid或者群聊时groupid
+	chatType:,//1-单聊，2-群聊
+	filePath:,//视频文件路径
+	length:,//长度(Android必选，iOS可选)
+	displayName：//对方接收时显示的文件名（仅iOS需要）
+	ext:,//扩展属性（可选参数，字典格式）
+ }
+ */
+ -(void)sendVideo:(NSMutableArray *)array{
+ 
+     id videoData =[self getDataFromJson:array[0]];
+     BOOL isGroup;
+     if([[videoData objectForKey:@"chatType"] isEqual:@"1"] ){
+         isGroup =NO;
+     }else if([[videoData objectForKey:@"chatType"] isEqual:@"2"] ){
+         isGroup =YES;
+     }
+ 
+     EMChatVideo *videoChat = [[EMChatVideo alloc] initWithFile:[self absPath:[videoData objectForKey:@"filePath"]] displayName:[videoData objectForKey:@"displayName"]];
+ 
+     if([videoData objectForKey:@"length"]){
+         videoChat.duration=[[videoData objectForKey:@"length"] integerValue];
+     }
+     EMVideoMessageBody *body = [[EMVideoMessageBody alloc] initWithChatObject:videoChat];
+     // 生成message
+     EMMessage *message = [[EMMessage alloc] initWithReceiver:[videoData objectForKey:@"username"] bodies:@[body]];
+     message.isGroup = isGroup; // 设置是否是群聊
+ 
+ 
+ 
+     if([[videoData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
+     message.ext=[videoData objectForKey:@"ext"];
+ 
+     }
+ 
+ 
+     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
+     [videoChat release];
+     [body release];
+     [message release];
+ 
+ 
+ 
+ 
+}
+
+ /*
+ #####[2.15]sendHasReadResponseForMessage(param)//发送消息已读回执
+ var param ={
+	
+	msgId:,//消息Id
+ }
+ */
+
+
+
+
+-(void)sendHasReadResponseForMessage:(NSMutableArray *)array{
+    
+    
+    id info =[self getDataFromJson:array[0]];
+    if ([info objectForKey:@"msgId"]){
+        EMMessage *msg=[self getMessage:[info objectForKey:@"msgId"]];
+        [_sharedInstance.chatManager sendHasReadResponseForMessage:msg];
+    }
+    
+}
 
 /*
 	
@@ -863,7 +1010,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 -(void)cbGetUnreadMsgCount:(NSUInteger)unreadMsgCount{
     
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
-    [dict setObject:[NSString stringWithFormat:@"%lu",(unsigned long)unreadMsgCount] forKey:@"count"];
+    [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)unreadMsgCount] forKey:@"count"];
     
     [self returnJSonWithName:@"cbGetUnreadMsgCount" dictionary:dict];
 }
@@ -1037,8 +1184,8 @@ var chatterInfo = {
  */
 -(void)didReceiveBuddyRequest:(NSString *)username message:(NSString *)message{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
-    [dict setObject:message forKey:@"reason"];
-    [dict setObject:username forKey:@"username"];
+    [dict setValue:message forKey:@"reason"];
+    [dict setValue:username forKey:@"username"];
     [self returnJSonWithName:@"onContactInvited" dictionary:dict];
 }
 /*
@@ -1052,7 +1199,7 @@ var chatterInfo = {
  -(void)didAcceptedByBuddy:(NSString *)username{
  
  NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
- [dict setObject:username forKey:@"username"];
+ [dict setValue:username forKey:@"username"];
  
  [self returnJSonWithName:@"onContactAgreed" dictionary:dict];
  }
@@ -1066,7 +1213,7 @@ var chatterInfo = {
   */
 -(void)didRejectedByBuddy:(NSString *)username{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
-    [dict setObject:username forKey:@"username"];
+    [dict setValue:username forKey:@"username"];
     
     [self returnJSonWithName:@"onContactRefused" dictionary:dict];
     
@@ -1247,9 +1394,9 @@ var chatterInfo = {
                           reason:(NSString *)reason
                            error:(EMError *)error{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
-    [dict setObject:groupId forKey:@"groupId"];
-    [dict setObject:username forKey:@"invitee"];
-    [dict setObject:reason forKey:@"reason"];
+    [dict setValue:groupId forKey:@"groupId"];
+    [dict setValue:username forKey:@"invitee"];
+    [dict setValue:reason forKey:@"reason"];
     [self returnJSonWithName:@"onInvitationDeclined" dictionary:dict];
     
 }
@@ -1276,8 +1423,8 @@ var chatterInfo = {
 
 - (void)group:(EMGroup *)group didLeave:(EMGroupLeaveReason)reason error:(EMError *)error{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
-    [dict setObject:group.groupId forKey:@"groupId"];
-    [dict setObject:group.groupSubject forKey:@"groupName"];
+    [dict setValue:group.groupId forKey:@"groupId"];
+    [dict setValue:group.groupSubject forKey:@"groupName"];
     
     //群组被销毁
     if(reason == eGroupLeaveReason_Destroyed){
@@ -1307,10 +1454,10 @@ var chatterInfo = {
                              error:(EMError *)error{
      if(!error){
          NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
-         [dict setObject:groupId forKey:@"groupId"];
-         [dict setObject:groupname forKey:@"groupName"];
-         [dict setObject:username forKey:@"applyer"];
-         [dict setObject:reason forKey:@"reason"];
+         [dict setValue:groupId forKey:@"groupId"];
+         [dict setValue:groupname forKey:@"groupName"];
+         [dict setValue:username forKey:@"applyer"];
+         [dict setValue:reason forKey:@"reason"];
          [self playSoundAndVibration];
          [self returnJSonWithName:@"onApplicationReceived" dictionary:dict];
      }
@@ -1334,9 +1481,9 @@ var chatterInfo = {
         NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
         EMError *error2=nil;
         EMGroup *group=[self.sharedInstance.chatManager fetchGroupInfo:groupId error:&error2];
-        [dict setObject:groupId forKey:@"groupId"];
-        [dict setObject:groupname forKey:@"groupName"];
-        [dict setObject:group.owner forKey:@"accepter"];
+        [dict setValue:groupId forKey:@"groupId"];
+        [dict setValue:groupname forKey:@"groupName"];
+        [dict setValue:group.owner forKey:@"accepter"];
         [self returnJSonWithName:@"onApplicationAccept" dictionary:dict];
     }
 }
@@ -1357,9 +1504,9 @@ var chatterInfo = {
                                      reason:(NSString *)reason
                                       error:(EMError *)error{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
-    [dict setObject:fromId forKey:@"decliner"];
-    [dict setObject:groupname forKey:@"groupName"];
-    [dict setObject:reason forKey:@"reason"];
+    [dict setValue:fromId forKey:@"decliner"];
+    [dict setValue:groupname forKey:@"groupName"];
+    [dict setValue:reason forKey:@"reason"];
     [self returnJSonWithName:@"onApplicationDeclined" dictionary:dict];
     
 }
@@ -1474,7 +1621,7 @@ var chatterInfo = {
     
     [self.sharedInstance.chatManager asyncRemoveOccupants:usernames fromGroup:[removeUser objectForKey:@"groupId"]];
     
-    
+    [usernames release];
 }
 
 /*
@@ -1564,26 +1711,26 @@ var chatterInfo = {
     NSMutableArray *grouplist=[NSMutableArray arrayWithCapacity:10] ;
     
     if ([[getGroup objectForKey:@"loadCache"] isEqual:@"true"]){
-        [dict setObject:@"0" forKey:@"result"];
+        [dict setValue:@"0" forKey:@"result"];
         groups = [self.sharedInstance.chatManager loadAllMyGroupsFromDatabaseWithAppend2Chat:YES];
         
         for (EMGroup  *group in groups){
             [grouplist addObject:[self convertEMGroupToDict:group]];
         }
-        [dict setObject:grouplist forKey:@"grouplist"];
+        [dict setValue:grouplist forKey:@"grouplist"];
         
     }else{
         
         [self.sharedInstance.chatManager asyncFetchMyGroupsListWithCompletion:^(NSArray *groups, EMError *error) {
             if (!error) {
-                [dict setObject:@"0" forKey:@"result"];
+                [dict setValue:@"0" forKey:@"result"];
                 for (EMGroup  *group in groups){
                     [grouplist addObject:[self convertEMGroupToDict:group]];
                 }
-                [dict setObject:grouplist forKey:@"grouplist"];
+                [dict setValue:grouplist forKey:@"grouplist"];
                 
             }else{
-                [dict setObject:@"1" forKey:@"result"];
+                [dict setValue:@"1" forKey:@"result"];
             }
             [self returnJSonWithName:@"cbGetGroupsFromServer" dictionary:dict];
         } onQueue:nil];
@@ -1615,15 +1762,15 @@ var chatterInfo = {
     
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
     if(!error){
-        [dict setObject:@"0" forKey:@"result"];
+        [dict setValue:@"0" forKey:@"result"];
         NSMutableArray *grouplist=[NSMutableArray arrayWithCapacity:10] ;
         for (EMGroup  *group in groups){
             [grouplist addObject:[self convertEMGroupToDict:group]];
         }
         
-        [dict setObject:grouplist forKey:@"grouplist"];
+        [dict setValue:grouplist forKey:@"grouplist"];
     }else{
-        [dict setObject:@"1" forKey:@"result"];
+        [dict setValue:@"1" forKey:@"result"];
     }
     [self returnJSonWithName:@"cbGetAllPublicGroupsFromServer" dictionary:dict];
 }
@@ -1657,7 +1804,7 @@ var chatterInfo = {
              error:(EMError *)error{
     NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
     if(!error){
-        [dict setObject:[self convertEMGroupToDict:group] forKey:@"group"];
+        [dict setValue:[self convertEMGroupToDict:group] forKey:@"group"];
         [self returnJSonWithName:@"cbGetGroup" dictionary:dict];
     }
 }
@@ -1793,8 +1940,8 @@ var chatterInfo = {
         
         self.call = callSession;
         NSMutableDictionary *dictCallReceive =[NSMutableDictionary dictionaryWithCapacity:2];
-        [dictCallReceive setObject:callSession.sessionId forKey:@"callId"];
-        [dictCallReceive setObject:callSession.sessionChatter forKey:@"from"];
+        [dictCallReceive setValue:callSession.sessionId forKey:@"callId"];
+        [dictCallReceive setValue:callSession.sessionChatter forKey:@"from"];
         NSString *callType;
         if (callSession.type ==eCallSessionTypeAudio) {
             callType = @"0";
@@ -1803,7 +1950,7 @@ var chatterInfo = {
         }else{//callSession.type ==eCallSessionTypeContent
             callType = @"2";
         }
-        [dictCallReceive setObject:callType forKey:@"callType"];
+        [dictCallReceive setValue:callType forKey:@"callType"];
         [self returnJSonWithName:@"onCallReceive" dictionary:dictCallReceive];
         
         NSMutableDictionary *dictCallStateChanged =[NSMutableDictionary dictionaryWithCapacity:1];
@@ -1824,7 +1971,7 @@ var chatterInfo = {
             callState =@"1";
         }
         
-        [dictCallStateChanged setObject:callState forKey:@"state"];
+        [dictCallStateChanged setValue:callState forKey:@"state"];
         
         [self returnJSonWithName:@"onCallStateChanged" dictionary:dictCallStateChanged];
     }
@@ -1866,7 +2013,6 @@ var chatterInfo = {
  }
  */
 -(void)registerRemoteNotification:(NSMutableArray *)array{
-    
     UIApplication *application = [UIApplication sharedApplication];
     application.applicationIconBadgeNumber = 0;
     
@@ -1877,62 +2023,78 @@ var chatterInfo = {
         [application registerUserNotificationSettings:settings];
     }
     
-    
 #if !TARGET_IPHONE_SIMULATOR
     //iOS8 注册APNS
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0){
-        [[UIApplication sharedApplication] registerUserNotificationSettings:[UIUserNotificationSettings
-                                                                             settingsForTypes:(UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge)
-                                                                             categories:nil]];
-        
-        
-        [[UIApplication sharedApplication] registerForRemoteNotifications];
+    if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
+        [application registerForRemoteNotifications];
     }else{
-        if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
-            [application registerForRemoteNotifications];
-        }else{
-            UIRemoteNotificationType notificationTypes = UIRemoteNotificationTypeBadge |
-            UIRemoteNotificationTypeSound |
-            UIRemoteNotificationTypeAlert;
-            [[UIApplication sharedApplication] registerForRemoteNotificationTypes:notificationTypes];
-        }
+        UIRemoteNotificationType notificationTypes = UIRemoteNotificationTypeBadge |
+        UIRemoteNotificationTypeSound |
+        UIRemoteNotificationTypeAlert;
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:notificationTypes];
     }
 #endif
     
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(EasemobAPNsFail:) name:@"EasemobAPNsFail" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(EasemobAPNsSucceed:) name:@"EasemobAPNsSucceed" object:nil];
+    
 }
-// 将得到的deviceToken传给SDK
-- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken{
-    [self.sharedInstance application:application didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
+
+-(void)EasemobAPNsSucceed:(NSNotification *)notif{
+    NSData *deviceToken = [notif.userInfo objectForKey:@"deviceToken"];
+    [_sharedInstance application:app didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setObject:@"1" forKey:@"result"];
+    [dict setValue:@"1" forKey:@"result"];
+    [self returnJSonWithName:@"cbRegisterRemoteNotification" dictionary:dict];
+}
+-(void)EasemobAPNsFail:(NSNotification *)notif{
+    NSError *error =[notif.userInfo objectForKey:@"error"];
+    [_sharedInstance application:app didFailToRegisterForRemoteNotificationsWithError:error];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:@"2" forKey:@"result"];
+    [dict setValue:error forKey:@"errorInfo"];
     [self returnJSonWithName:@"cbRegisterRemoteNotification" dictionary:dict];
 }
 
-// 注册deviceToken失败
-- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error{
-    [self.sharedInstance application:application didFailToRegisterForRemoteNotificationsWithError:error];
+// 将得到的deviceToken传给SDK
++ (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken{
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setObject:@"2" forKey:@"result"];
-    [dict setObject:error forKey:@"errorInfo"];
-    [self returnJSonWithName:@"cbRegisterRemoteNotification" dictionary:dict];
+    [dict setObject:deviceToken forKey:@"deviceToken"];
+
+    
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"EasemobAPNsSucceed" object:nil userInfo:dict];
+    
+}
+
+// 注册deviceToken失败
++ (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error{
+
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setObject:error forKey:@"error"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"EasemobAPNsFail" object:nil userInfo:dict];
+
     
 }
  /*
  #####[7.3]updatePushOptions(param);//设置apns全局属性
  var param{
  
-	nickname;//昵称
-	noDisturbing;//是否开启免打扰模式 1-开启 2-不开启
-	noDisturbingStartH;//免打扰模式开始时间  小时（int）
-	noDisturbingEndH;//免打扰模式结束时间  小时（int）
+  nickname;//昵称
+  displayStyle;//推送显示类型 0-提示"您有一条新消息" 1- 显示详细消息内容
+  noDisturbingStyle;//是否开启免打扰模式 0-全天免打扰 1-自定义时段免打扰 2- 关闭免打扰
+  noDisturbingStartH;//免打扰模式开始时间  小时（int）
+  noDisturbingEndH;//免打扰模式结束时间  小时（int）
  }
  #####[7.4]cbUpdatePushOptions(param);//设置apns全局属性回调
  var param{
  
-	nickname;//昵称
-	noDisturbing;//是否开启免打扰模式 1-开启 2-不开启
-	noDisturbingStartH;//免打扰模式开始时间  小时（int）
-	noDisturbingEndH;//免打扰模式结束时间  小时（int）
+  nickname;//昵称
+  displayStyle;//推送显示类型 0-提示"您有一条新消息" 1- 显示详细消息内容
+  noDisturbingStyle;//是否开启免打扰模式 0-全天免打扰 1-自定义时段免打扰 2- 关闭免打扰
+  noDisturbingStartH;//免打扰模式开始时间  小时（int）
+  noDisturbingEndH;//免打扰模式结束时间  小时（int）
  }
  
 	说明：updatePushOptions全为可选参数，当传入空值时，即可通过回调获得当前apns全局属性
@@ -1944,11 +2106,23 @@ var chatterInfo = {
     if([info objectForKey:@"nickname"]){
         self.apnsOptions.nickname =[info objectForKey:@"nickname"];
     }
-    if([info objectForKey:@"noDisturbing"]){
-        if([[info objectForKey:@"noDisturbing"] isEqual:@"1"]){
-            self.apnsOptions.noDisturbStatus =YES;
-        }else if([[info objectForKey:@"noDisturbing"] isEqual:@"2"]){
-            self.apnsOptions.noDisturbStatus =NO;
+    if([info objectForKey:@"displayStyle"]){
+        NSInteger displayStyle=[[info objectForKey:@"displayStyle"] integerValue];
+        if(displayStyle == 0){
+            self.apnsOptions.displayStyle=ePushNotificationDisplayStyle_simpleBanner;
+        }else if(displayStyle == 1){
+            self.apnsOptions.displayStyle=ePushNotificationDisplayStyle_messageSummary;
+        }
+        
+    }
+    if([info objectForKey:@"noDisturbingStyle"]){
+        NSInteger noDisturbingStyle =[[info objectForKey:@"noDisturbingStyle"] integerValue];
+        if(noDisturbingStyle== 0){
+            self.apnsOptions.noDisturbStatus =ePushNotificationNoDisturbStatusDay ;
+        }else if(noDisturbingStyle== 1){
+            self.apnsOptions.noDisturbStatus =ePushNotificationNoDisturbStatusCustom;
+        }else if(noDisturbingStyle== 2){
+            self.apnsOptions.noDisturbStatus =ePushNotificationNoDisturbStatusClose;
         }
     }
     if([info objectForKey:@"noDisturbingStartH"]){
@@ -1964,16 +2138,33 @@ var chatterInfo = {
                        error:(EMError *)error{
     if(options){
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-        [dict setObject:options.nickname forKey:@"nickname"];
-        [dict setObject:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingStartH"];
-        [dict setObject:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingEndH"];
+        
+        [dict setValue:options.nickname forKey:@"nickname"];
+        [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingStartH"];
+        [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingEndH"];
         NSString *noDisturbStatus;
-        if(options.noDisturbStatus){
-            noDisturbStatus = @"1";
-        }else{
-            noDisturbStatus = @"2";
+
+            switch (options.noDisturbStatus) {
+                case ePushNotificationNoDisturbStatusClose:
+                    noDisturbStatus = @"2";
+                    break;
+                case ePushNotificationNoDisturbStatusCustom:
+                    noDisturbStatus = @"1";
+                    break;
+                    
+                default://case ePushNotificationNoDisturbStatusDay
+                    noDisturbStatus = @"0";
+                    break;
+            }
+        NSString *displayStyle=@"";
+        if(options.displayStyle == ePushNotificationDisplayStyle_simpleBanner){
+            displayStyle=@"0";
+        }else if(options.displayStyle == ePushNotificationDisplayStyle_messageSummary){
+            displayStyle=@"1";
         }
-        [dict setObject:noDisturbStatus forKey:@"noDisturbing"];
+
+        [dict setValue:displayStyle forKey:@"displayStyle"];
+        [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
         [self returnJSonWithName:@"cbUpdatePushOptions" dictionary:dict];
     }
 }
@@ -1997,12 +2188,13 @@ var chatterInfo = {
 -(void) ignoreGroupPushNotification:(NSMutableArray *)array{
     id info = [self getDataFromJson:array[0]];
     NSString *groupId = [info objectForKey:@"groupId"];
-    NSString *ignore = [info objectForKey:@"isIgnore"];
+    if(![info objectForKey:@"isIgnore"]) return;
+    NSInteger ignore = [[info objectForKey:@"isIgnore"] integerValue];
     BOOL isIgnore;
     if(ignore){
-        if([ignore isEqual:@"1"]){
+        if(ignore==1){
             isIgnore =YES;
-        }else if([ignore isEqual:@"2"]){
+        }else if(ignore==2){
             isIgnore =NO;
         }else{
             return;
@@ -2014,7 +2206,7 @@ var chatterInfo = {
 - (void)didIgnoreGroupPushNotification:(NSArray *)ignoredGroupList
                                  error:(EMError *)error{
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setObject:ignoredGroupList forKey:@"groups"];
+    [dict setValue:ignoredGroupList forKey:@"groupIds"];
     [self returnJSonWithName:@"cbIgnoreGroupPushNotification" dictionary:dict];
 }
 
@@ -2025,6 +2217,104 @@ var chatterInfo = {
 
 
 
+#pragma mark - notifiers
+
+
+
+
+- (void)setupNotifiers{
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidEnterBackgroundNotif:)
+                                                 name:UIApplicationDidEnterBackgroundNotification
+                                               object:nil];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appWillEnterForeground:)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidFinishLaunching:)
+                                                 name:UIApplicationDidFinishLaunchingNotification
+                                               object:nil];
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidBecomeActiveNotif:)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appWillResignActiveNotif:)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidReceiveMemoryWarning:)
+                                                 name:UIApplicationDidReceiveMemoryWarningNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appWillTerminateNotif:)
+                                                 name:UIApplicationWillTerminateNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appProtectedDataWillBecomeUnavailableNotif:)
+                                                 name:UIApplicationProtectedDataWillBecomeUnavailable
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appProtectedDataDidBecomeAvailableNotif:)
+                                                 name:UIApplicationProtectedDataDidBecomeAvailable
+                                               object:nil];
+}
+
+- (void)appDidEnterBackgroundNotif:(NSNotification*)notif{
+    [_sharedInstance applicationDidEnterBackground:notif.object];
+}
+
+- (void)appWillEnterForeground:(NSNotification*)notif
+{
+    [_sharedInstance applicationWillEnterForeground:notif.object];
+}
+
+- (void)appDidFinishLaunching:(NSNotification*)notif
+{
+    [_sharedInstance applicationDidFinishLaunching:notif.object];
+}
+
+- (void)appDidBecomeActiveNotif:(NSNotification*)notif
+{
+    [_sharedInstance applicationDidBecomeActive:notif.object];
+}
+
+- (void)appWillResignActiveNotif:(NSNotification*)notif
+{
+    [_sharedInstance applicationWillResignActive:notif.object];
+}
+
+- (void)appDidReceiveMemoryWarning:(NSNotification*)notif
+{
+    [_sharedInstance applicationDidReceiveMemoryWarning:notif.object];
+}
+
+- (void)appWillTerminateNotif:(NSNotification*)notif
+{
+    [_sharedInstance applicationWillTerminate:notif.object];
+}
+
+- (void)appProtectedDataWillBecomeUnavailableNotif:(NSNotification*)notif
+{
+    [_sharedInstance applicationProtectedDataWillBecomeUnavailable:notif.object];
+}
+
+- (void)appProtectedDataDidBecomeAvailableNotif:(NSNotification*)notif
+{
+    [_sharedInstance applicationProtectedDataDidBecomeAvailable:notif.object];
+}
 
 
 

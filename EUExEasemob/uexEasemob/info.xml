@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version ="3.0.7" build="7">
-        <info>7:优化了本地数据库的相关设置</info>
+        uexName="uexEasemob" version ="3.0.8" build="8">
+        <info>8:新增方法 发送视频消息等，详见文档</info>
+        <build>7:优化了本地数据库的相关设置</build>
         <build>6:自动登录功能改在 初始化 中进行设置</build>
         <build>5:针对新版本做了一些代码优化</build>
         <build>4:支持自动登录，更新环信iOS SDK版本至V2.1.6</build>
