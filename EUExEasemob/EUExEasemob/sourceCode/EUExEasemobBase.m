@@ -206,7 +206,7 @@
             break;
     }
     if(message.ext){
-        [result setValue:[message.ext JSONFragment] forKey:@"ext"];
+        [result setValue:[message.ext objectForKey:@"uexExtraString"] forKey:@"ext"];
     }
     [result setValue:type forKey:@"messageType"];
     [result setValue:bodyDict forKey:@"messageBody"];

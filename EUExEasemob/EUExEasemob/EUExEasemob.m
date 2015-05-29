@@ -19,6 +19,7 @@
 
 
 
+
 @interface EUExEasemob()<IChatManagerDelegate,EMCallManagerDelegate>
 
 
@@ -494,9 +495,8 @@ static UIApplication *app;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[textData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
-    if([[textData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[textData objectForKey:@"ext"];
-
+    if([[textData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[textData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
     [txtChat release];
@@ -538,9 +538,8 @@ static UIApplication *app;
     
     
     
-    if([[voiceData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[voiceData objectForKey:@"ext"];
-        
+    if([[voiceData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[voiceData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     
 
@@ -581,9 +580,8 @@ static UIApplication *app;
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[pictureData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     
-    if([[pictureData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[pictureData objectForKey:@"ext"];
-        
+    if([[pictureData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[pictureData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
@@ -623,9 +621,8 @@ static UIApplication *app;
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[locationData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
     
-    if([[locationData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[locationData objectForKey:@"ext"];
-        
+    if([[locationData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[locationData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
     [locChat release];
@@ -659,9 +656,8 @@ static UIApplication *app;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[fileData objectForKey:@"username"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
-    if([[fileData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[fileData objectForKey:@"ext"];
-        
+    if([[fileData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[fileData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
     [fileChat release];
@@ -693,9 +689,8 @@ static UIApplication *app;
     // 生成message
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[cmdMsgData objectForKey:@"toUsername"] bodies:@[body]];
     message.isGroup = isGroup; // 设置是否是群聊
-    if([[cmdMsgData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-        message.ext=[cmdMsgData objectForKey:@"ext"];
-        
+    if([[cmdMsgData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+        message.ext=[NSDictionary dictionaryWithObject:[cmdMsgData objectForKey:@"ext"] forKey:@"uexExtraString"];
     }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
     [cmdChat release];
@@ -873,9 +868,8 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
  
  
  
-     if([[videoData objectForKey:@"ext"] isKindOfClass:[NSDictionary class]]){
-     message.ext=[videoData objectForKey:@"ext"];
- 
+     if([[videoData objectForKey:@"ext"] isKindOfClass:[NSString class]]){
+         message.ext=[NSDictionary dictionaryWithObject:[videoData objectForKey:@"ext"] forKey:@"uexExtraString"];
      }
  
  
@@ -888,6 +882,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
  
  
 }
+
 
  /*
  #####[2.15]sendHasReadResponseForMessage(param)//发送消息已读回执
