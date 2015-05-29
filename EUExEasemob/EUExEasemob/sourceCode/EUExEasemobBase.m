@@ -164,12 +164,13 @@
             break;
         case eMessageBodyType_Voice:
         {
-            // 音频sdk会自动下载
+            
             type = @"audio";
             EMVoiceMessageBody *body = (EMVoiceMessageBody *)msgBody;
             [bodyDict setValue:body.remotePath forKey:@"remotePath"];
             [bodyDict setValue:body.secretKey forKey:@"secretKey"];
             [bodyDict setValue:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:[NSString stringWithFormat:@"%ld",(long)body.duration] forKey:@"length"];
         }
             break;
         case eMessageBodyType_Video:
@@ -182,10 +183,12 @@
             [bodyDict setValue:body.thumbnailRemotePath forKey:@"thumbnailRemotePath"];
             [bodyDict setValue:body.thumbnailSecretKey forKey:@"thumbnailSecretKey"];
             [bodyDict setValue:body.displayName forKey:@"displayName"];
+            [bodyDict setValue:[NSString stringWithFormat:@"%ld",(long)body.duration] forKey:@"length"];
         }
             break;
         case eMessageBodyType_File:
         {
+            type=@"file";
             EMFileMessageBody *body = (EMFileMessageBody *)msgBody;
             [bodyDict setValue:body.remotePath forKey:@"remotePath"];
             [bodyDict setValue:body.secretKey forKey:@"secretKey"];
