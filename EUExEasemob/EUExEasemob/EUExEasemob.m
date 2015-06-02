@@ -430,7 +430,7 @@ static UIApplication *app;
 }
 
 //离线透传消息接收完成的回调
-- (void)didFinishedReceiveOfflineCmdMessages:(NSArray *)offlineCmdMessages{
+- (void)didReceiveOfflineCmdMessages:(NSArray *)offlineCmdMessages{
     for(EMMessage *msg in offlineCmdMessages){
         [self didReceiveCmdMessage:msg];
     }
