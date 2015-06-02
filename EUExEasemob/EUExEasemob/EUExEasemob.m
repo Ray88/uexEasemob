@@ -11,7 +11,7 @@
 #import "EUExBase.h"
 #import "EUExEasemobBase.h"
 #import "EUExEasemob.h"
-
+#import "JSON.h"
 
 
 
@@ -393,7 +393,7 @@ static UIApplication *app;
 	所有离线和在线时接受到的的非透传消息，都通过此回调传递
  */
 -(void)didReceiveMessage:(EMMessage *)message{
-
+    //NSLog(@"didReceiveMessage");
     //[self.sharedInstance.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
     NSMutableDictionary *dict = [self convertEMMessageToDict:message];
     
@@ -401,7 +401,7 @@ static UIApplication *app;
     [self returnJSonWithName:@"onNewMessage" dictionary:dict];
     
 }
-- (void)didFinishedReceiveOfflineMessages:(NSArray *)offlineMessages{
+- (void)didReceiveOfflineMessages:(NSArray *)offlineMessages{
     for(EMMessage *msg in offlineMessages){
         [self didReceiveMessage:msg];
     }
