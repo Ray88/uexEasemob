@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
-    <plugin name="uexEasemob" global = "true">
+    <plugin name="uexEasemob">
         
     <method name="initEasemob"></method>
     <method name="login"></method>
@@ -12,6 +12,7 @@
     <method name="sendPicture"></method>
     <method name="sendLocationMsg"></method>
     <method name="sendFile"></method>
+    <method name="getMessageHistory"></method>
     <method name="getUnreadMsgCount"></method>
     <method name="resetUnreadMsgCount"></method>
     <method name="deleteConversation"></method>
@@ -50,10 +51,11 @@
     <method name="updatePushOptions"></method>
     <method name="ignoreGroupPushNotification"></method>
     <method name="getChatterInfo"></method>
-     <method name="sendVideo"></method>
-     <method name="sendHasReadResponseForMessage"></method>
-     <method name="getMessageById"></method>
-
+    <method name="setIsAutoLoginEnabled"></method>
+    <method name="sendVideo"></method>
+    <method name="sendHasReadResponseForMessage"></method>
+    <method name="getMessageById"></method>
+    <method name="getTotalUnreadMsgCount"></method>
 
         
     </plugin>
