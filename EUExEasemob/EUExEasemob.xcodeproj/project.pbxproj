@@ -117,8 +117,6 @@
 		422C698E1B2BB29C0036730B /* EaseMobHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EaseMobHeaders.h; sourceTree = "<group>"; };
 		422C698F1B2BB29C0036730B /* EMSDKFull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMSDKFull.h; sourceTree = "<group>"; };
 		422C69901B2BB29C0036730B /* EMSDKFullHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMSDKFullHeaders.h; sourceTree = "<group>"; };
-		422C69921B2BB29C0036730B /* EaseMob.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EaseMob.h; sourceTree = "<group>"; };
-		422C69931B2BB29C0036730B /* EaseMobHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EaseMobHeaders.h; sourceTree = "<group>"; };
 		422C69951B2BB29C0036730B /* commonDefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = commonDefs.h; sourceTree = "<group>"; };
 		422C69981B2BB29C0036730B /* IDeviceManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IDeviceManagerDelegate.h; sourceTree = "<group>"; };
 		422C699A1B2BB29C0036730B /* EMDeviceManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMDeviceManagerDelegate.h; sourceTree = "<group>"; };
@@ -237,7 +235,6 @@
 				422C693E1B2BB29C0036730B /* CallService */,
 				422C694D1B2BB29C0036730B /* ChatService */,
 				422C698C1B2BB29C0036730B /* EaseMobClientSDK */,
-				422C69911B2BB29C0036730B /* EaseMobClientSDKLite */,
 				422C69941B2BB29C0036730B /* Utility */,
 			);
 			path = include;
@@ -405,15 +402,6 @@
 				422C69901B2BB29C0036730B /* EMSDKFullHeaders.h */,
 			);
 			path = EaseMobClientSDK;
-			sourceTree = "<group>";
-		};
-		422C69911B2BB29C0036730B /* EaseMobClientSDKLite */ = {
-			isa = PBXGroup;
-			children = (
-				422C69921B2BB29C0036730B /* EaseMob.h */,
-				422C69931B2BB29C0036730B /* EaseMobHeaders.h */,
-			);
-			path = EaseMobClientSDKLite;
 			sourceTree = "<group>";
 		};
 		422C69941B2BB29C0036730B /* Utility */ = {

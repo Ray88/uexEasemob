@@ -894,7 +894,7 @@ var chatterInfo = {
 -(void) createPrivateGroup:(NSMutableArray *)inArguments{
 
     id groupInfo = [self getDataFromJson:inArguments[0]];
-    
+    if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
     
     EMError *error = nil;
     EMGroupStyleSetting *groupStyleSetting = [[EMGroupStyleSetting alloc] init];
@@ -908,9 +908,10 @@ var chatterInfo = {
     }else{
         groupStyleSetting.groupStyle = eGroupStyle_PrivateOnlyOwnerInvite;  //有创建者可以邀请非成员进群
     }
-    [self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:@"initialWelcomeMessage" styleSetting:groupStyleSetting error:&error];
+    
+    EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
     if(!error){
-        // NSLog(@"创建成功 -- %@",group);
+       NSLog(@"创建成功 -- %@",group);
     }
 
 }
@@ -928,7 +929,7 @@ var chatterInfo = {
  */
 -(void) createPublicGroup:(NSMutableArray *)inArguments{
     id groupInfo = [self getDataFromJson:inArguments[0]];
-    
+     if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
     
     EMError *error = nil;
     EMGroupStyleSetting *groupStyleSetting = [[EMGroupStyleSetting alloc] init];
@@ -942,9 +943,9 @@ var chatterInfo = {
     }else{
         groupStyleSetting.groupStyle = eGroupStyle_PublicJoinNeedApproval;  //有创建者可以邀请非成员进群
     }
-    [self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
+    EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
     if(!error){
-        // NSLog(@"创建成功 -- %@",group);
+        NSLog(@"创建成功 -- %@",group);
     }
 
 }
@@ -952,7 +953,7 @@ var chatterInfo = {
 
   -(void)addUsersToGroup:(NSMutableArray *)inArguments{
   id groupInfo = [self getDataFromJson:inArguments[0]];
-  
+  if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
   
   [self.sharedInstance.chatManager asyncAddOccupants:[groupInfo objectForKey:@"newmembers"] toGroup:[groupInfo objectForKey:@"groupId"] welcomeMessage:[groupInfo objectForKey:@"inviteMessage"]];
   
@@ -969,9 +970,13 @@ var chatterInfo = {
 
 -(void) removeUserFromGroup:(NSMutableArray *)inArguments{
     id removeUser =[self getDataFromJson:inArguments[0]];
-    NSArray * usernames =[[NSArray alloc] initWithObjects:[removeUser objectForKey:@"username"],nil];
-    
-    [self.sharedInstance.chatManager asyncRemoveOccupants:usernames fromGroup:[removeUser objectForKey:@"groupId"]];
+    if(![removeUser isKindOfClass:[NSDictionary class]]) return;
+    if([[removeUser objectForKey:@"username"] isKindOfClass:[NSArray class]]){
+        [self.sharedInstance.chatManager asyncRemoveOccupants:[removeUser objectForKey:@"username"] fromGroup:[removeUser objectForKey:@"groupId"]];
+    }
+    if([[removeUser objectForKey:@"username"] isKindOfClass:[NSString class]]){
+        [self.sharedInstance.chatManager asyncRemoveOccupants:@[[removeUser objectForKey:@"username"]] fromGroup:[removeUser objectForKey:@"groupId"]];
+    }
     
     
 }
@@ -988,7 +993,7 @@ var chatterInfo = {
  */
 -(void) joinGroup:(NSMutableArray *)inArguments{
     id joinGroupInfo =[self getDataFromJson:inArguments[0]];
-    
+    if(![joinGroupInfo isKindOfClass:[NSDictionary class]]) return;
     [self.sharedInstance.chatManager asyncApplyJoinPublicGroup:[joinGroupInfo objectForKey:@"groupId"]  withGroupname:[joinGroupInfo objectForKey:@"groupName"] message:[joinGroupInfo objectForKey:@"reason"] completion:^(EMGroup *group, EMError *error) {
         if (!error) {
             // NSLog(@"申请成功");
@@ -1006,7 +1011,7 @@ var chatterInfo = {
 -(void) exitFromGroup:(NSMutableArray *)inArguments{
     
     id exitInfo =[self getDataFromJson:inArguments[0]];
-    
+    if(![exitInfo isKindOfClass:[NSDictionary class]]) return;
     
     
     
@@ -1030,6 +1035,7 @@ var chatterInfo = {
     
     
     id exitAndDeleteInfo =[self getDataFromJson:inArguments[0]];
+     if(![exitAndDeleteInfo isKindOfClass:[NSDictionary class]]) return;
     
     [self.sharedInstance.chatManager asyncDestroyGroup:[exitAndDeleteInfo objectForKey:@"groupId"] completion:^(EMGroup *group, EMGroupLeaveReason reason, EMError *error) {
         if (!error) {
