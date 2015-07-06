@@ -24,13 +24,16 @@
 @property (nonatomic,assign) BOOL isPlaySound;
 @property (nonatomic,assign) BOOL isPlayVibration;
 @property (nonatomic,assign) BOOL messageNotification;
-@property (nonatomic,assign) BOOL useSpeaker;
+
 
 @property (nonatomic,assign) BOOL isAutoLoginEnabled;
 
 @property (nonatomic,strong) dispatch_queue_t callBackDispatchQueue;
 
 
+extern NSString *const cEMChatTypeUser;
+extern NSString *const cEMChatTypeGroup;
+extern NSString *const cEMChatTypeChatRoom;
 
 
 

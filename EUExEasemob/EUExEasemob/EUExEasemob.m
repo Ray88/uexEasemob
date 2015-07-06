@@ -10,6 +10,7 @@
 #import "EUExBase.h"
 #import "EUExEasemob.h"
 #import "uexEasemobManager.h"
+#import "EMCursorResult.h"
 
 
 
@@ -362,12 +363,7 @@
     }else if([[notifyInfo objectForKey:@"vibrateEnable"] integerValue]==1){
         _mgr.isPlayVibration = YES;
     }
-#warning useSpeaker
-    if ([[notifyInfo objectForKey:@"userSpeaker"] integerValue]==0){
-        _mgr.useSpeaker=NO;
-    }else if([[notifyInfo objectForKey:@"userSpeaker"] integerValue]==1){
-        _mgr.useSpeaker=YES;
-    }
+
     if ([[notifyInfo objectForKey:@"deliveryNotification"] integerValue]==0){
         [self.sharedInstance.chatManager disableDeliveryNotification];
     }else if([[notifyInfo objectForKey:@"deliveryNotification"] integerValue]==1){
@@ -678,8 +674,8 @@ var chatterInfo = {
         [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
         [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
         [chatter setValue:username forKey:@"chatter"];
-        [chatter setValue:@"1" forKey:@"isGroup"];
-        [chatter setValue:@"1" forKey:@"chatType"];
+        [chatter setValue:cEMChatTypeUser forKey:@"isGroup"];
+        [chatter setValue:cEMChatTypeUser forKey:@"chatType"];
         [result addObject:chatter];
     }
     for(EMGroup *group in grouplist){
@@ -689,15 +685,15 @@ var chatterInfo = {
         [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
         [chatter setValue:group.groupId forKey:@"chatter"];
         [chatter setValue:group.groupSubject forKey:@"groupName"];
-        [chatter setValue:@"0" forKey:@"isGroup"];
-        [chatter setValue:@"0" forKey:@"chatType"];
+        [chatter setValue:cEMChatTypeGroup forKey:@"isGroup"];
+        [chatter setValue:cEMChatTypeGroup forKey:@"chatType"];
         [result addObject:chatter];
     }
     
     
     [self callBackJsonWithFunction:@"cbGetChatterInfo" parameter:result];
     
-#warning chatroom待添加
+
 }
 
 
@@ -1076,7 +1072,7 @@ var chatterInfo = {
             [grouplist addObject:[_mgr analyzeEMGroup:group]];
         }
         [dict setValue:grouplist forKey:@"grouplist"];
-        
+        [self callBackJsonWithFunction:@"cbGetGroupsFromServer" parameter:dict];
     }else{
         
         [self.sharedInstance.chatManager asyncFetchMyGroupsListWithCompletion:^(NSArray *groups, EMError *error) {

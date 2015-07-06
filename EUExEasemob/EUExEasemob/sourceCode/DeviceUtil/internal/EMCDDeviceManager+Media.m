@@ -11,12 +11,18 @@
 #import "EMAudioRecorderUtil.h"
 #import "EMVoiceConverter.h"
 
+
 typedef NS_ENUM(NSInteger, EMAudioSession){
     EM_DEFAULT = 0,
     EM_AUDIOPLAYER,
     EM_AUDIORECORDER
 };
-
+typedef NS_ENUM(NSInteger, EMAudioError){
+    EMErrorFileTypeConvertionFailure = 900001,
+    EMErrorAudioRecordNotStarted,
+    EMErrorAudioRecordDurationTooShort,
+    EMErrorAudioRecordStoping
+};
 @implementation EMCDDeviceManager (Media)
 #pragma mark - AudioPlayer
 // 播放音频

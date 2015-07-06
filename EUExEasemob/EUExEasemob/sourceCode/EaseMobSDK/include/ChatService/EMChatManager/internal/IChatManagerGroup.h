@@ -9,12 +9,11 @@
 
 #import "IChatManagerBase.h"
 #import "EMGroupManagerDefs.h"
-#import "EMCursorResult.h"
 
 @class EMGroup;
 @class EMError;
 @class EMGroupStyleSetting;
-//@class EMCursorResult;
+@class EMCursorResult;
 
 /*!
  @protocol

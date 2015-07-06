@@ -19,6 +19,16 @@
 
 
 @implementation uexEasemobManager
+
+
+NSString *const cEMChatTypeUser=@"0";
+NSString *const cEMChatTypeGroup=@"1";
+NSString *const cEMChatTypeChatRoom=@"2";
+
+
+
+
+
 + (instancetype)sharedInstance
 {
     static dispatch_once_t pred = 0;
@@ -86,7 +96,7 @@
     self.isPlayVibration = YES;
     self.isPlaySound = YES;
     self.messageNotification = YES;
-    self.useSpeaker = YES;
+
     [_SDK.chatManager enableDeliveryNotification];//开启消息已送达回执
     self.isAutoLoginEnabled=YES;
 }
@@ -627,26 +637,39 @@ const static NSString *kPluginName=@"uexEasemob";
     
     NSMutableDictionary *result =[NSMutableDictionary dictionary];
     
-    
-    
-    [result setValue:message.from forKey:@"from"];
-    [result setValue:message.to forKey:@"to"];
-    [result setValue:message.messageId forKey:@"messageId"];
-    [result setValue:[NSString stringWithFormat:@"%lld",message.timestamp] forKey:@"messageTime"];
-    [result setValue:message.isDeliveredAcked?@"1":@"0" forKey:@"isDelievered"];
-    [result setValue:message.isReadAcked?@"1":@"0" forKey:@"isAcked"];
-    [result setValue:message.isRead?@"1":@"0" forKey:@"isRead"];
     switch (message.messageType) {
         case eMessageTypeChat:
-            [result setValue:@"0" forKey:@"isGroup"];
-            [result setValue:@"0" forKey:@"chatType"];
+            [result setValue:message.from forKey:@"from"];
+            [result setValue:message.to forKey:@"to"];
+
             break;
         case eMessageTypeGroupChat:
-            [result setValue:@"1" forKey:@"isGroup"];
-            [result setValue:@"1" forKey:@"chatType"];
+            [result setValue:message.groupSenderName forKey:@"from"];
+            [result setValue:message.from forKey:@"to"];
+            
+            break;
+            
+        default:
+            return nil;
+            break;
+    }
+
+    [result setValue:message.messageId forKey:@"messageId"];
+    [result setValue:[NSString stringWithFormat:@"%lld",message.timestamp] forKey:@"messageTime"];
+    [result setValue:message.isDeliveredAcked?@(YES):@(NO) forKey:@"isDelievered"];
+    [result setValue:message.isReadAcked?@(YES):@(NO) forKey:@"isAcked"];
+    [result setValue:message.isRead?@(YES):@(NO) forKey:@"isRead"];
+    switch (message.messageType) {
+        case eMessageTypeChat:
+            [result setValue:cEMChatTypeUser forKey:@"isGroup"];
+            [result setValue:cEMChatTypeUser forKey:@"chatType"];
+            break;
+        case eMessageTypeGroupChat:
+            [result setValue:cEMChatTypeGroup forKey:@"isGroup"];
+            [result setValue:cEMChatTypeGroup forKey:@"chatType"];
             break;
         case eMessageTypeChatRoom:
-            [result setValue:@"2" forKey:@"chatType"];
+            [result setValue:cEMChatTypeChatRoom forKey:@"chatType"];
             break;
             
         default:
@@ -748,15 +771,15 @@ const static NSString *kPluginName=@"uexEasemob";
     [result setValue:conversation.chatter forKey:@"chatter"];
     switch (conversation.conversationType) {
         case eConversationTypeChat:
-            [result setValue:@"0" forKey:@"isGroup"];
-            [result setValue:@"0" forKey:@"chatType"];
+            [result setValue:cEMChatTypeUser forKey:@"isGroup"];
+            [result setValue:cEMChatTypeUser forKey:@"chatType"];
             break;
         case eConversationTypeGroupChat:
-            [result setValue:@"1" forKey:@"isGroup"];
-            [result setValue:@"1" forKey:@"chatType"];
+            [result setValue:cEMChatTypeGroup forKey:@"isGroup"];
+            [result setValue:cEMChatTypeGroup forKey:@"chatType"];
             break;
         case eConversationTypeChatRoom:
-            [result setValue:@"2" forKey:@"chatType"];
+            [result setValue:cEMChatTypeChatRoom forKey:@"chatType"];
             break;
             
         default:
@@ -799,40 +822,42 @@ const static NSString *kPluginName=@"uexEasemob";
 - (NSDictionary *)analyzeEMGroup:(EMGroup *)group{
     NSMutableDictionary *result =[NSMutableDictionary dictionary];
     [result setValue:group.groupSubject forKey:@"groupSubject"];
+    [result setValue:group.groupSubject forKey:@"groupName"];
+    [result setValue:group.groupDescription forKey:@"groupDescription"];
     [result setValue:group.members forKey:@"members"];
     [result setValue:group.owner forKey:@"owner"];
-    [result setValue:group.isPushNotificationEnabled?@"1":@"0" forKey:@"isPushNotificationEnabled"];
-    [result setValue:group.isBlocked?@"1":@"0" forKey:@"isBlocked"];
-    NSString *isPublic =@"";
-    NSString *allowInvites =@"";
-    NSString *membersOnly =@"";
-    
+    [result setValue:group.isPushNotificationEnabled?@(YES):@(NO) forKey:@"isPushNotificationEnabled"];
+    [result setValue:group.isBlocked?@(YES):@(NO) forKey:@"isBlocked"];
+    id isPublic =@"";
+    id allowInvites =@"";
+    id membersOnly =@"";
+
     switch (group.groupSetting.groupStyle) {
         case eGroupStyle_PrivateOnlyOwnerInvite:
-            isPublic =@"0";
-            allowInvites =@"0";
-            membersOnly =@"1";
+            isPublic =@(NO);
+            allowInvites =@(NO);
+            membersOnly =@(YES);
             break;
         case eGroupStyle_PrivateMemberCanInvite:
-            isPublic =@"0";
-            allowInvites =@"1";
-            membersOnly =@"1";
+            isPublic =[NSNumber numberWithBool:false];
+            allowInvites =@(YES);
+            membersOnly =@(YES);
             
             break;
         case eGroupStyle_PublicJoinNeedApproval:
-            isPublic =@"1";
-            allowInvites =@"1";
-            membersOnly =@"1";
+            isPublic =[NSNumber numberWithBool:true];
+            allowInvites =@(YES);
+            membersOnly =@(YES);
             break;
         case eGroupStyle_PublicOpenJoin :
-            isPublic =@"1";
-            allowInvites =@"1";
-            membersOnly =@"0";
+            isPublic =[NSNumber numberWithBool:true];
+            allowInvites =@(YES);
+            membersOnly =@(NO);
             break;
         case eGroupStyle_PublicAnonymous:
-            isPublic =@"1";
-            allowInvites =@"1";
-            membersOnly =@"0";
+            isPublic =[NSNumber numberWithBool:true];
+            allowInvites =@(YES);
+            membersOnly =@(NO);
             break;
             
         default:
