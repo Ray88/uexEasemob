@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.9" build="9">
-        <info>9:SDK更新，代码优化等，详见文档</info>
+        uexName="uexEasemob" version="3.0.10" build="10">
+        <info>10:SDK更新；EMGroup回调结构优化；支持IDE打包</info>
+        <build>9:SDK更新，代码优化等，详见文档</build>
         <build>8:新增方法 发送视频消息等，详见文档</build>
         <build>7:优化了本地数据库的相关设置</build>
         <build>6:自动登录功能改在 初始化 中进行设置</build>

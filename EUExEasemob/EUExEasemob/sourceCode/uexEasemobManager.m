@@ -839,23 +839,23 @@ const static NSString *kPluginName=@"uexEasemob";
             membersOnly =@(YES);
             break;
         case eGroupStyle_PrivateMemberCanInvite:
-            isPublic =[NSNumber numberWithBool:false];
+            isPublic =@(NO);
             allowInvites =@(YES);
             membersOnly =@(YES);
             
             break;
         case eGroupStyle_PublicJoinNeedApproval:
-            isPublic =[NSNumber numberWithBool:true];
+            isPublic =@(YES);
             allowInvites =@(YES);
             membersOnly =@(YES);
             break;
         case eGroupStyle_PublicOpenJoin :
-            isPublic =[NSNumber numberWithBool:true];
+            isPublic =@(YES);
             allowInvites =@(YES);
             membersOnly =@(NO);
             break;
         case eGroupStyle_PublicAnonymous:
-            isPublic =[NSNumber numberWithBool:true];
+            isPublic =@(YES);
             allowInvites =@(YES);
             membersOnly =@(NO);
             break;

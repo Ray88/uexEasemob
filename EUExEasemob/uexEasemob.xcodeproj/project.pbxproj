@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C65E29C11B4F5C9400CD6CB3 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C65E29C01B4F5C9400CD6CB3 /* ImageIO.framework */; };
 		C6A99DB91B43D34700913599 /* EUExEasemob.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99D191B43D34700913599 /* EUExEasemob.m */; };
 		C6A99DBA1B43D34700913599 /* EMAudioPlayerUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99D211B43D34700913599 /* EMAudioPlayerUtil.m */; };
 		C6A99DBB1B43D34700913599 /* EMAudioRecorderUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99D231B43D34700913599 /* EMAudioRecorderUtil.m */; };
@@ -21,8 +22,6 @@
 		C6A99DC41B43D34700913599 /* libopencore-amrnb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99D3A1B43D34700913599 /* libopencore-amrnb.a */; };
 		C6A99DC51B43D34700913599 /* libopencore-amrwb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99D3E1B43D34700913599 /* libopencore-amrwb.a */; };
 		C6A99DCA1B43D34700913599 /* uexEasemobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99DB81B43D34700913599 /* uexEasemobManager.m */; };
-		C6A99DCE1B43D36D00913599 /* Beqtucontent.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99DCC1B43D36D00913599 /* Beqtucontent.m */; };
-		C6A99DCF1B43D36D00913599 /* libAppCanEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99DCD1B43D36D00913599 /* libAppCanEngine.a */; };
 		C6A99DD21B43D3B200913599 /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99DD11B43D3B200913599 /* libresolv.dylib */; };
 		C6A99DD41B43D3B900913599 /* libstdc++.6.0.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99DD31B43D3B900913599 /* libstdc++.6.0.9.dylib */; };
 		C6A99DD61B43D3BE00913599 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A99DD51B43D3BE00913599 /* libc++.dylib */; };
@@ -62,6 +61,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C65E29C01B4F5C9400CD6CB3 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		C6A99D141B43D34700913599 /* EUExBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBase.h; sourceTree = "<group>"; };
 		C6A99D151B43D34700913599 /* EUExBaseDefine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBaseDefine.h; sourceTree = "<group>"; };
 		C6A99D161B43D34700913599 /* EUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUtility.h; sourceTree = "<group>"; };
@@ -191,9 +191,6 @@
 		C6A99DB61B43D34700913599 /* SBJsonWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBJsonWriter.h; sourceTree = "<group>"; };
 		C6A99DB71B43D34700913599 /* uexEasemobManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uexEasemobManager.h; sourceTree = "<group>"; };
 		C6A99DB81B43D34700913599 /* uexEasemobManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = uexEasemobManager.m; sourceTree = "<group>"; };
-		C6A99DCB1B43D36D00913599 /* Beqtucontent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Beqtucontent.h; sourceTree = "<group>"; };
-		C6A99DCC1B43D36D00913599 /* Beqtucontent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Beqtucontent.m; sourceTree = "<group>"; };
-		C6A99DCD1B43D36D00913599 /* libAppCanEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libAppCanEngine.a; sourceTree = "<group>"; };
 		C6A99DD11B43D3B200913599 /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
 		C6A99DD31B43D3B900913599 /* libstdc++.6.0.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.6.0.9.dylib"; path = "usr/lib/libstdc++.6.0.9.dylib"; sourceTree = SDKROOT; };
 		C6A99DD51B43D3BE00913599 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
@@ -226,6 +223,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C65E29C11B4F5C9400CD6CB3 /* ImageIO.framework in Frameworks */,
 				C6A99DF61B43D76100913599 /* MobileCoreServices.framework in Frameworks */,
 				C6A99DF41B43D73300913599 /* MapKit.framework in Frameworks */,
 				C6A99DF21B43D6D700913599 /* Security.framework in Frameworks */,
@@ -248,7 +246,6 @@
 				C6A99DD61B43D3BE00913599 /* libc++.dylib in Frameworks */,
 				C6A99DD41B43D3B900913599 /* libstdc++.6.0.9.dylib in Frameworks */,
 				C6A99DD21B43D3B200913599 /* libresolv.dylib in Frameworks */,
-				C6A99DCF1B43D36D00913599 /* libAppCanEngine.a in Frameworks */,
 				C6C391CC1B43D26D004FBA03 /* Foundation.framework in Frameworks */,
 				C6A99DC51B43D34700913599 /* libopencore-amrwb.a in Frameworks */,
 				C6A99E021B43D9BB00913599 /* libEaseMobClientSDK_x86_64.a in Frameworks */,
@@ -666,9 +663,6 @@
 		C6C391BF1B43D26D004FBA03 = {
 			isa = PBXGroup;
 			children = (
-				C6A99DCB1B43D36D00913599 /* Beqtucontent.h */,
-				C6A99DCC1B43D36D00913599 /* Beqtucontent.m */,
-				C6A99DCD1B43D36D00913599 /* libAppCanEngine.a */,
 				C6A99D121B43D34700913599 /* EUExEasemob */,
 				C6C391CA1B43D26D004FBA03 /* Frameworks */,
 				C6C391C91B43D26D004FBA03 /* Products */,
@@ -686,6 +680,7 @@
 		C6C391CA1B43D26D004FBA03 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C65E29C01B4F5C9400CD6CB3 /* ImageIO.framework */,
 				C6A99DF51B43D76100913599 /* MobileCoreServices.framework */,
 				C6A99DF31B43D73300913599 /* MapKit.framework */,
 				C6A99DF11B43D6D700913599 /* Security.framework */,
@@ -761,7 +756,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C6A99DCE1B43D36D00913599 /* Beqtucontent.m in Sources */,
 				C6A99DC21B43D34700913599 /* wav.mm in Sources */,
 				C6A99DBE1B43D34700913599 /* EMCDDeviceManager+ProximitySensor.m in Sources */,
 				C6A99DC31B43D34700913599 /* EMVoiceConverter.mm in Sources */,
@@ -862,9 +856,6 @@
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/DeviceUtil/VoiceConvert/opencore-amrwb",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/EaseMobSDK/lib",
 					"$(PROJECT_DIR)",
-					"/Users/appcan/百度云同步盘/AppCan",
-					iOS,
-					"Workspace/Easemob/iOSSDK-20150619/EaseMobSDK/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -890,9 +881,6 @@
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/DeviceUtil/VoiceConvert/opencore-amrwb",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/EaseMobSDK/lib",
 					"$(PROJECT_DIR)",
-					"/Users/appcan/百度云同步盘/AppCan",
-					iOS,
-					"Workspace/Easemob/iOSSDK-20150619/EaseMobSDK/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
