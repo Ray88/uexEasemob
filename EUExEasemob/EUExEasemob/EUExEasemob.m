@@ -635,7 +635,9 @@ var chatterInfo = {
     lastMsg;//EMMessage格式的json字符串，最后一条消息
 }*/
 
--(void) getChatterInfo:(NSMutableArray *)inArguments{
+-(void)getChatterInfo:(NSMutableArray *)inArguments{
+
+    
     NSMutableArray *usernamelist = [NSMutableArray array];
     EMError *error=nil;
     NSArray *buddyList = [self.sharedInstance.chatManager fetchBuddyListWithError:&error];
@@ -697,6 +699,80 @@ var chatterInfo = {
 }
 
 
+-(void)getRecentChatters:(NSMutableArray *)inArguments{
+    
+    NSArray *conversationArray=[_sharedInstance.chatManager loadAllConversationsFromDatabaseWithAppend2Chat:YES];
+    NSMutableArray *tmp =[NSMutableArray array];
+    for(EMConversation *conversation in conversationArray){
+
+        NSMutableDictionary *chatter =[NSMutableDictionary dictionary];
+        
+        switch (conversation.conversationType) {
+            
+            case eConversationTypeChat:{
+                [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+                [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+                [chatter setValue:conversation.chatter forKey:@"chatter"];
+                [chatter setValue:cEMChatTypeUser forKey:@"isGroup"];
+                [chatter setValue:cEMChatTypeUser forKey:@"chatType"];
+                [tmp addObject:chatter];
+            }
+            break;
+            case eConversationTypeGroupChat:{
+                [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+                [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+                [chatter setValue:conversation.chatter forKey:@"chatter"];
+                EMError *error=nil;
+                EMGroup *group=[_sharedInstance.chatManager fetchGroupInfo:conversation.chatter error:&error];
+                if(!error)[chatter setValue:group.groupSubject forKey:@"groupName"];
+                
+                [chatter setValue:cEMChatTypeGroup forKey:@"isGroup"];
+                [chatter setValue:cEMChatTypeGroup forKey:@"chatType"];
+                [tmp addObject:chatter];
+            }
+            break;
+            case eConversationTypeChatRoom:
+            
+            break;
+            
+            
+            
+        }
+    }
+    NSMutableArray *result=[NSMutableArray array];
+    for(NSDictionary *dict in tmp){
+        if([result count]==0){
+            [result addObject:dict];
+        }else{
+            NSInteger cTime=[self getTimeStampInChatterInfo:dict];
+            BOOL isInsert=NO;
+            for(int i=0;i<[result count];i++){
+                NSDictionary *cpDict=result[i];
+                if(cTime>[self getTimeStampInChatterInfo:cpDict]){
+                    [result insertObject:dict atIndex:i];
+                    isInsert=YES;
+                    break;
+                }
+            }
+            if(!isInsert)[result addObject:dict];
+        }
+    }
+    [self callBackJsonWithFunction:@"cbGetRecentChatters" parameter:result];
+
+    
+    
+}
+
+
+-(NSInteger)getTimeStampInChatterInfo:(NSDictionary*)dict{
+    if([dict objectForKey:@"lastMsg"]&&[[dict objectForKey:@"lastMsg"] isKindOfClass:[NSDictionary class]]){
+        NSDictionary *msg=[dict objectForKey:@"lastMsg"];
+        if([msg objectForKey:@"messageTime"]){
+            return [[msg objectForKey:@"messageTime"] integerValue];
+        }
+    }
+    return -1;
+}
 
 -(void)getTotalUnreadMsgCount:(NSMutableArray *)inArguments{
     NSInteger count =[self.sharedInstance.chatManager loadTotalUnreadMessagesCountFromDatabase];

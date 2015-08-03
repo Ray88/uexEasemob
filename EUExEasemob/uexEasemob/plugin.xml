@@ -56,6 +56,7 @@
     <method name="sendHasReadResponseForMessage"></method>
     <method name="getMessageById"></method>
     <method name="getTotalUnreadMsgCount"></method>
+    <method name="getRecentChatters"></method>
 
         
     </plugin>

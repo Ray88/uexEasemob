@@ -348,9 +348,10 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     [dict setValue:resp.from forKey:@"username"];
     [self callBackJsonWithFunction:@"onDeliveryMessage" parameter:dict];
 }
+
 - (void)didSendMessage:(EMMessage *)message
                  error:(EMError *)error{
-    
+    NSMutableDictionary *dict=[NSMutableDictionary dictionary];
     
     if(!error){
         
@@ -358,8 +359,14 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
                                                                               conversationType:(EMConversationType)message.messageType];
         [conversation removeMessageWithId:message.messageId];
         [_SDK.chatManager insertMessagesToDB:@[message] forChatter:message.conversationChatter append2Chat:YES];
+        [dict setValue:@(YES) forKey:@"isSuccess"];
 
+    }else{
+        [dict setValue:@(NO) forKey:@"isSuccess"];
+        [dict setValue:error.description forKey:@"errorStr"];
     }
+    [dict setValue:[self analyzeEMMessage:message] forKey:@"message"];
+    [self callBackJsonWithFunction:@"onMessageSent" parameter:dict];
     
 }
 
