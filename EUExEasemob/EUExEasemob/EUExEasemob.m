@@ -968,7 +968,7 @@ var chatterInfo = {
     id groupInfo = [self getDataFromJson:inArguments[0]];
     if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
     
-    EMError *error = nil;
+    //EMError *error = nil;
     EMGroupStyleSetting *groupStyleSetting = [[EMGroupStyleSetting alloc] init];
     
     NSInteger userNumber=[[groupInfo objectForKey:@"maxUsers"] integerValue];
@@ -981,10 +981,18 @@ var chatterInfo = {
         groupStyleSetting.groupStyle = eGroupStyle_PrivateOnlyOwnerInvite;  //有创建者可以邀请非成员进群
     }
     
-    EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
-    if(!error){
-       NSLog(@"创建成功 -- %@",group);
-    }
+    //EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
+    [self.sharedInstance.chatManager asyncCreateGroupWithSubject:[groupInfo objectForKey:@"groupName"]
+                                                     description:[groupInfo objectForKey:@"desc"]
+                                                        invitees:[groupInfo objectForKey:@"members"]
+                                           initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"]
+                                                    styleSetting:groupStyleSetting
+                                                      completion:^(EMGroup *group, EMError *error) {
+                                                          
+                                                          [self onGroupCreatedWithGroup:group andError:error];
+                                                      } onQueue:nil];
+
+
 
 }
 /*
@@ -1003,7 +1011,7 @@ var chatterInfo = {
     id groupInfo = [self getDataFromJson:inArguments[0]];
      if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
     
-    EMError *error = nil;
+
     EMGroupStyleSetting *groupStyleSetting = [[EMGroupStyleSetting alloc] init];
     
     NSInteger userNumber=[[groupInfo objectForKey:@"maxUsers"] integerValue];
@@ -1013,15 +1021,34 @@ var chatterInfo = {
     if ([[groupInfo objectForKey:@"allowInvite"] isEqual:@"true"] || [[groupInfo objectForKey:@"allowInvite"] boolValue] == YES){  /// 创建不同类型的群组，这里需要才传入不同的类型
         groupStyleSetting.groupStyle = eGroupStyle_PublicOpenJoin;  //所有群成员都可以邀请非成员进群
     }else{
-        groupStyleSetting.groupStyle = eGroupStyle_PublicJoinNeedApproval;  //有创建者可以邀请非成员进群
+        groupStyleSetting.groupStyle = eGroupStyle_PublicJoinNeedApproval;  //只有创建者可以邀请非成员进群
     }
-    EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
-    if(!error){
-        NSLog(@"创建成功 -- %@",group);
-    }
+    //EMGroup *group=[self.sharedInstance.chatManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:[groupInfo objectForKey:@"members"] initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"] styleSetting:groupStyleSetting error:&error];
+    [self.sharedInstance.chatManager asyncCreateGroupWithSubject:[groupInfo objectForKey:@"groupName"]
+                                                     description:[groupInfo objectForKey:@"desc"]
+                                                        invitees:[groupInfo objectForKey:@"members"]
+                                           initialWelcomeMessage:[groupInfo objectForKey:@"initialWelcomeMessage"]
+                                                    styleSetting:groupStyleSetting
+                                                      completion:^(EMGroup *group, EMError *error) {
+                                                          
+        [self onGroupCreatedWithGroup:group andError:error];
+    } onQueue:nil];
+    
 
 }
- 
+
+-(void)onGroupCreatedWithGroup:(EMGroup *)group andError:(EMError *)error{
+    NSMutableDictionary *dict =[NSMutableDictionary dictionary];
+    if(error){
+        [dict setValue:@(NO) forKey:@"isSuccess"];
+        [dict setValue:error.description forKey:@"errorStr"];
+        
+    }else{
+        [dict setValue:@(YES) forKey:@"isSuccess"];
+        [dict setValue:[_mgr analyzeEMGroup:group] forKey:@"group"];
+    }
+    [self callBackJsonWithFunction:@"onGroupCreated" parameter:dict];
+}
 
   -(void)addUsersToGroup:(NSMutableArray *)inArguments{
   id groupInfo = [self getDataFromJson:inArguments[0]];

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.11" build="11">
-        <info>11:新增API:getRecentChatters，onMessageSent</info>
+        uexName="uexEasemob" version="3.0.12" build="12">
+        <build>12:新增API:onGroupCreated</build>
+        <build>11:新增API:getRecentChatters，onMessageSent</build>
         <build>10:SDK更新；EMGroup回调结构优化；支持IDE打包</build>
         <build>9:SDK更新，代码优化等，详见文档</build>
         <build>8:新增方法 发送视频消息等，详见文档</build>

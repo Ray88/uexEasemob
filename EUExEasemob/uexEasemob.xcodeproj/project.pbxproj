@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4295E3241B6B464600F18974 /* libAppCanEngine_IOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4295E3231B6B464600F18974 /* libAppCanEngine_IOS.a */; };
 		C65E29C11B4F5C9400CD6CB3 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C65E29C01B4F5C9400CD6CB3 /* ImageIO.framework */; };
 		C6A99DB91B43D34700913599 /* EUExEasemob.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99D191B43D34700913599 /* EUExEasemob.m */; };
 		C6A99DBA1B43D34700913599 /* EMAudioPlayerUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = C6A99D211B43D34700913599 /* EMAudioPlayerUtil.m */; };
@@ -61,6 +62,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4295E3231B6B464600F18974 /* libAppCanEngine_IOS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libAppCanEngine_IOS.a; path = ../libAppCanEngine_IOS.a; sourceTree = "<group>"; };
 		C65E29C01B4F5C9400CD6CB3 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		C6A99D141B43D34700913599 /* EUExBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBase.h; sourceTree = "<group>"; };
 		C6A99D151B43D34700913599 /* EUExBaseDefine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBaseDefine.h; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				C6A99E011B43D9BB00913599 /* libEaseMobClientSDK_i386.a in Frameworks */,
 				C6A99DD61B43D3BE00913599 /* libc++.dylib in Frameworks */,
 				C6A99DD41B43D3B900913599 /* libstdc++.6.0.9.dylib in Frameworks */,
+				4295E3241B6B464600F18974 /* libAppCanEngine_IOS.a in Frameworks */,
 				C6A99DD21B43D3B200913599 /* libresolv.dylib in Frameworks */,
 				C6C391CC1B43D26D004FBA03 /* Foundation.framework in Frameworks */,
 				C6A99DC51B43D34700913599 /* libopencore-amrwb.a in Frameworks */,
@@ -663,6 +666,7 @@
 		C6C391BF1B43D26D004FBA03 = {
 			isa = PBXGroup;
 			children = (
+				4295E3231B6B464600F18974 /* libAppCanEngine_IOS.a */,
 				C6A99D121B43D34700913599 /* EUExEasemob */,
 				C6C391CA1B43D26D004FBA03 /* Frameworks */,
 				C6C391C91B43D26D004FBA03 /* Products */,
@@ -856,6 +860,7 @@
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/DeviceUtil/VoiceConvert/opencore-amrwb",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/EaseMobSDK/lib",
 					"$(PROJECT_DIR)",
+					$SRCROOT/../,
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
@@ -881,6 +886,7 @@
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/DeviceUtil/VoiceConvert/opencore-amrwb",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode/EaseMobSDK/lib",
 					"$(PROJECT_DIR)",
+					$SRCROOT/../,
 				);
 				OTHER_LDFLAGS = (
 					"-ObjC",
