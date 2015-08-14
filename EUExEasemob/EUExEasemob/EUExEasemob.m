@@ -231,6 +231,7 @@
 
 
 
+
 #pragma mark - Message
 
 -(void)sendText:(NSMutableArray *)inArguments{
@@ -311,7 +312,7 @@
     id info =[self getDataFromJson:inArguments[0]];
 
     
-    EMChatLocation *locChat = [[EMChatLocation alloc] initWithLatitude:[[info objectForKey:@"latitude"] doubleValue] longitude:[[info objectForKey:@"longtitude"] doubleValue] address:[info objectForKey:@"locationAddress"]];
+    EMChatLocation *locChat = [[EMChatLocation alloc] initWithLatitude:[[info objectForKey:@"latitude"] doubleValue] longitude:[[info objectForKey:@"longitude"] doubleValue] address:[info objectForKey:@"locationAddress"]];
     EMLocationMessageBody *body = [[EMLocationMessageBody alloc] initWithChatObject:locChat];
     
     
@@ -1533,7 +1534,6 @@ var chatterInfo = {
     
     [self.sharedInstance.chatManager asyncUpdatePushOptions:_mgr.apnsOptions];
 }
-
 
 
 

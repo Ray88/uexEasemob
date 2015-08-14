@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.12" build="12">
-        <info>12:新增API:onGroupCreated</info>
+        uexName="uexEasemob" version="3.0.13" build="13">
+        <info>13:修复发送位置经度为0的bug</info>
+        <build>12:新增API:onGroupCreated</build>
         <build>11:新增API:getRecentChatters，onMessageSent</build>
         <build>10:SDK更新；EMGroup回调结构优化；支持IDE打包</build>
         <build>9:SDK更新，代码优化等，详见文档</build>
