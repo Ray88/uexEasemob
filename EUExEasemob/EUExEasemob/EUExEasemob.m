@@ -122,7 +122,7 @@
         if (!error && loginInfo) {
             [dict setValue:@"1" forKey:@"result"];
             [dict setValue:@"登录成功" forKey:@"message"];
-            _mgr.apnsOptions =[self.sharedInstance.chatManager pushNotificationOptions];
+            [self getAPNsOptions];
             [_sharedInstance.chatManager importDataToNewDatabase];
             [_sharedInstance.chatManager loadDataFromDatabase];
             [self callBackJsonWithFunction:@"onConnected" parameter:nil];
@@ -135,6 +135,22 @@
     } onQueue:nil];
 }
 
+-(void)getAPNsOptions{
+    EMPushNotificationOptions *tmp=[self.sharedInstance.chatManager pushNotificationOptions];
+    EMPushNotificationOptions *options=[[EMPushNotificationOptions alloc]init];
+    options.nickname=tmp.nickname;
+    options.displayStyle=tmp.displayStyle;
+    options.noDisturbingEndH=tmp.noDisturbingEndH;
+    options.noDisturbingStartH=tmp.noDisturbingStartH;
+    options.noDisturbStatus=tmp.noDisturbStatus;
+    options.backupDataSize=tmp.backupDataSize;
+    options.backupPaths=tmp.backupPaths;
+    options.backupTimeInterval=tmp.backupTimeInterval;
+    options.backupType=tmp.backupType;
+    options.backupVersion=tmp.backupVersion;
+    _mgr.apnsOptions=options;
+
+}
 
  -(void)logout:(NSMutableArray *)inArguments{
 
@@ -1551,8 +1567,6 @@ var chatterInfo = {
 -(void)initSettings{
     self.mgr=[uexEasemobManager sharedInstance];
     self.sharedInstance=self.mgr.SDK;
-
-    _mgr.apnsOptions=self.mgr.apnsOptions;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:@"uexEasemobInitSuccess" object:nil];
 }
 

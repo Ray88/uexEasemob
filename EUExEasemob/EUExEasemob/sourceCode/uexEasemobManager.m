@@ -604,6 +604,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
         
         [dict setValue:displayStyle forKey:@"displayStyle"];
         [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
+        self.apnsOptions=options;
         [self callBackJsonWithFunction:@"cbUpdatePushOptions" parameter:dict];
     }
 }
