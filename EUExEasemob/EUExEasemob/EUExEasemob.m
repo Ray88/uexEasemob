@@ -121,14 +121,14 @@
         
         if (!error && loginInfo) {
             [dict setValue:@"1" forKey:@"result"];
-            [dict setValue:@"登录成功" forKey:@"message"];
+            [dict setValue:@"登录成功" forKey:@"msg"];
             [self getAPNsOptions];
             [_sharedInstance.chatManager importDataToNewDatabase];
             [_sharedInstance.chatManager loadDataFromDatabase];
             [self callBackJsonWithFunction:@"onConnected" parameter:nil];
         }else{
             [dict setValue:@"2" forKey:@"result"];
-            [dict setValue:@"登录失败" forKey:@"message"];
+            [dict setValue:[NSString stringWithFormat:@"登录失败:%@",error.description] forKey:@"msg"];
             
         }
         [self callBackJsonWithFunction:@"cbLogin" parameter:dict];
