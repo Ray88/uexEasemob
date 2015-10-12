@@ -183,7 +183,7 @@
                                                           [dict setValue:@"注册成功" forKey:@"msg"];
                                                       }else{
                                                           [dict setValue:@"2" forKey:@"result"];
-                                                          [dict setValue:@"注册失败" forKey:@"msg"];
+                                                          [dict setValue:[NSString stringWithFormat:@"注册失败:%@",error.description] forKey:@"msg"];
                                                       }
                                                       
                                                       
