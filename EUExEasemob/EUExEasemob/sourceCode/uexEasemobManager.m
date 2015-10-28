@@ -24,7 +24,7 @@
 NSString *const cEMChatTypeUser=@"0";
 NSString *const cEMChatTypeGroup=@"1";
 NSString *const cEMChatTypeChatRoom=@"2";
-
+NSString *const uexEasemobExtraInfoKey =@"ext";
 
 
 
@@ -764,7 +764,7 @@ const static NSString *kPluginName=@"uexEasemob";
             break;
     }
     if(message.ext){
-        [result setValue:[message.ext objectForKey:@"uexExtraString"] forKey:@"ext"];
+        [result setValue:[message.ext objectForKey:uexEasemobExtraInfoKey] forKey:@"ext"];
     }
     [result setValue:type forKey:@"messageType"];
     [result setValue:bodyDict forKey:@"messageBody"];

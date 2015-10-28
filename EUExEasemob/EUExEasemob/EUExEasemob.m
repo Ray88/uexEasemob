@@ -263,7 +263,7 @@
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[info objectForKey:@"username"] bodies:@[body]];
 
     if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
     }
     message.messageType=[self getMsgType:info];
 
@@ -290,7 +290,7 @@
     
     
     if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
     }
     message.messageType=[self getMsgType:info];
 
@@ -315,7 +315,7 @@
 
     
     if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
     }
     message.messageType=[self getMsgType:info];
 
@@ -336,7 +336,7 @@
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[info objectForKey:@"username"] bodies:@[body]];
     message.messageType=[self getMsgType:info];
     if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
     }
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
    }
@@ -353,7 +353,7 @@
     EMMessage *message = [[EMMessage alloc] initWithReceiver:[info objectForKey:@"username"] bodies:@[body]];
     
     if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+        message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
     }
     message.messageType=[self getMsgType:info];
     [self.sharedInstance.chatManager asyncSendMessage:message progress:nil];//异步方法发送消息
@@ -434,7 +434,7 @@
  
  
      if([[info objectForKey:@"ext"] isKindOfClass:[NSString class]]){
-         message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:@"uexExtraString"];
+         message.ext=[NSDictionary dictionaryWithObject:[info objectForKey:@"ext"] forKey:uexEasemobExtraInfoKey];
      }
  
      message.messageType=[self getMsgType:info];

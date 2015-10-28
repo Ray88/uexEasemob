@@ -12,7 +12,7 @@
 #import "EMCDDeviceManagerDelegate.h"
 
 
-
+extern NSString * const uexEasemobExtraInfoKey;
 @interface uexEasemobManager : NSObject <IChatManagerDelegate,EMCallManagerDelegate,EMCDDeviceManagerDelegate>
 
 @property (nonatomic,weak)EaseMob *SDK;
