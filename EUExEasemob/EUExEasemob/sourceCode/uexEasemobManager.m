@@ -835,7 +835,7 @@ const static NSString *kPluginName=@"uexEasemob";
     [result setValue:group.members forKey:@"members"];
     [result setValue:group.owner forKey:@"owner"];
     [result setValue:group.isPushNotificationEnabled?@(YES):@(NO) forKey:@"isPushNotificationEnabled"];
-    [result setValue:group.isBlocked?@(YES):@(NO) forKey:@"isBlocked"];
+    [result setValue:group.isBlocked?@(YES):@(NO) forKey:@"isBlock"];
     id isPublic =@"";
     id allowInvites =@"";
     id membersOnly =@"";

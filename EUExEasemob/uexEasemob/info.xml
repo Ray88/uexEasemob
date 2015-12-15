@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.15" build="15">
-        <info>15:SDK版本更新至V2.2.0r1</info>
+        uexName="uexEasemob" version="3.0.16" build="16">
+        <info>16:修复cbGetGroup回调结构和Android不一致的问题</info>
+        <build>15:SDK版本更新至V2.2.0r1</build>
         <build>14:cbLogin回调结构修正</build>
         <build>13:修复发送位置经度为0的bug</build>
         <build>12:新增API:onGroupCreated</build>

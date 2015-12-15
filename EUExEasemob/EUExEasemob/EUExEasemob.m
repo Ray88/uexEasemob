@@ -1290,10 +1290,8 @@ var chatterInfo = {
 
 - (void)cbGetGroup:(EMGroup *)group
              error:(EMError *)error{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
     if(!error){
-        [dict setValue:[_mgr analyzeEMGroup:group] forKey:@"group"];
-        [self callBackJsonWithFunction:@"cbGetGroup" parameter:dict];
+        [self callBackJsonWithFunction:@"cbGetGroup" parameter:[_mgr analyzeEMGroup:group]];
     }
 }
 
