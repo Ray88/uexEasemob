@@ -518,20 +518,20 @@
     NSString *startMsgId = [info objectForKey:@"startMsgId"];
     NSMutableArray *msgList =[NSMutableArray array];
     NSArray *messages;
-    if([startMsgId length]>0){
-        NSInteger  pagesize=[[info objectForKey:@"pagesize"] integerValue];
+    NSInteger pagesize=0;
+    if([info objectForKey:@"pagesize"]){
+        pagesize=[[info objectForKey:@"pagesize"] integerValue];
+    }
+    if(pagesize == 0){
+        messages = [conversation loadAllMessages];
+    }else if(startMsgId && [startMsgId length]>0){
         messages = [conversation loadNumbersOfMessages:pagesize withMessageId:startMsgId];
     }else{
         messages = [conversation loadAllMessages];
-       
-
     }
     
     for(EMMessage *msg in messages){
-        
         [msgList addObject:[_mgr analyzeEMMessage:msg]];
-        
-        
     }
     [self callBackJsonWithFunction:@"cbGetMessageHistory" parameter:@{@"messages":msgList}];
     
