@@ -319,7 +319,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     [dict setValue:dictMessage forKey:@"message"];
     EMCommandMessageBody *body = (EMCommandMessageBody *)cmdMessage.messageBodies.lastObject;
     [dict setValue:body.action forKey:@"action"];
-    [self playSoundAndVibration];
+    //[self playSoundAndVibration];
     [self callBackJsonWithFunction:@"onCmdMessageReceive" parameter:dict];
 }
 
