@@ -645,7 +645,7 @@
 		4230D7BA1B2B846C00BB8D7B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0630;
+				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = AppCan;
 				TargetAttributes = {
 					4230D7C11B2B846C00BB8D7B = {

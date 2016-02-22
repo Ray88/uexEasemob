@@ -15,16 +15,16 @@
 @end
 
 
-
+static const CGFloat kDefaultPlaySoundInterval = 3.0;
 
 
 @implementation uexEasemobManager
 
 
-NSString *const cEMChatTypeUser=@"0";
-NSString *const cEMChatTypeGroup=@"1";
-NSString *const cEMChatTypeChatRoom=@"2";
-NSString *const uexEasemobExtraInfoKey =@"ext";
+NSString *const cEMChatTypeUser = @"0";
+NSString *const cEMChatTypeGroup = @"1";
+NSString *const cEMChatTypeChatRoom = @"2";
+NSString *const uexEasemobExtraInfoKey = @"ext";
 
 
 
@@ -42,13 +42,13 @@ NSString *const uexEasemobExtraInfoKey =@"ext";
 }
 
 
--(instancetype)init{
-    self=[super init];
+- (instancetype)init{
+    self = [super init];
     if(self){
-        self.callBackDispatchQueue=dispatch_queue_create("gcd.uexEasemobCallBackDispatchQueue",NULL);
-        self.EMDevice=[EMCDDeviceManager sharedInstance];
-        _EMDevice.delegate=self;
-        
+        _callBackDispatchQueue = dispatch_queue_create("gcd.uexEasemobCallBackDispatchQueue",DISPATCH_QUEUE_SERIAL);
+        _EMDevice = [EMCDDeviceManager sharedInstance];
+        _EMDevice.delegate = self;
+        _isShowNotificationInBackgroud = YES;
         
         
             }
@@ -58,47 +58,53 @@ NSString *const uexEasemobExtraInfoKey =@"ext";
 
 
 
--(void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
-    _launchOptions=launchOptions;
-    NSDictionary *userInfo = [launchOptions objectForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
+- (void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
+    _launchOptions = launchOptions;
+    NSDictionary *userInfo = [launchOptions objectForKey:  @"UIApplicationLaunchOptionsRemoteNotificationKey"];
     if(userInfo)
     {
-        self.remoteLaunchDict=userInfo;
+        self.remoteLaunchDict = userInfo;
     }
 
 }
 
 
 #pragma mark - 初始化SDK
--(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName{
+- (void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName{
     if(!_SDK){
-        _SDK=[EaseMob sharedInstance];
+        _SDK = [EaseMob sharedInstance];
         [_SDK registerSDKWithAppKey:appKey
                            apnsCertName:certName
-                            otherConfig:@{kSDKConfigEnableConsoleLogger:[NSNumber numberWithBool:YES]}];
+                            otherConfig:@{kSDKConfigEnableConsoleLogger:@(YES)}];
         
         [_SDK application:[UIApplication sharedApplication] didFinishLaunchingWithOptions:_launchOptions];
         [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
         [self setupNotifiers];
         [self registerEaseMobNotification];
         [self setupDefaultValue];
-        [self callBackJsonWithFunction:@"cbInit" parameter:@"EaseMobSDK initialized successfully!"];
+        [self callBackJSONWithFunction:@"cbInit" parameter:@"EaseMobSDK initialized successfully!"];
         [[NSNotificationCenter defaultCenter] postNotificationName:@"uexEasemobInitSuccess"
                                                             object:nil];
+        if([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)])
+        {
+            UIUserNotificationType notificationTypes = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+            UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:notificationTypes categories:nil];
+            [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        }
     }else{
-        [self callBackJsonWithFunction:@"cbInit" parameter:@"EaseMobSDK has already been initialized!"];
+        [self callBackJSONWithFunction:@"cbInit" parameter:@"EaseMobSDK has already been initialized!"];
     }
     
 
 }
--(void)setupDefaultValue{
+- (void)setupDefaultValue{
     self.lastPlaySoundDate = [NSDate date];
     self.isPlayVibration = YES;
     self.isPlaySound = YES;
     self.messageNotification = YES;
 
     [_SDK.chatManager enableDeliveryNotification];//开启消息已送达回执
-    self.isAutoLoginEnabled=YES;
+    self.isAutoLoginEnabled = YES;
 }
 
 
@@ -122,7 +128,7 @@ NSString *const uexEasemobExtraInfoKey =@"ext";
     
     
     
--(void)setupNotifiers{
+- (void)setupNotifiers{
     [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(appDidEnterBackgroundNotif:)
                                                      name:UIApplicationDidEnterBackgroundNotification
@@ -217,7 +223,7 @@ NSString *const uexEasemobExtraInfoKey =@"ext";
 }
 
 #pragma mark - 振动响铃
-static const CGFloat kDefaultPlaySoundInterval = 3.0;
+
 
 - (void)playSoundAndVibration{
     NSTimeInterval timeInterval = [[NSDate date]
@@ -248,38 +254,38 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 
 #pragma mark - 自动登录回调
 
--(void)willAutoLoginWithInfo:(NSDictionary *)loginInfo
+- (void)willAutoLoginWithInfo:(NSDictionary *)loginInfo
                        error:(EMError *)error{
     
 }
 
 
--(void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
+- (void)didAutoLoginWithInfo:(NSDictionary *)loginInfo error:(EMError *)error{
     if (!error && loginInfo) {
-        self.apnsOptions =[_SDK.chatManager pushNotificationOptions];
+        self.apnsOptions = [_SDK.chatManager pushNotificationOptions];
         [_SDK.chatManager importDataToNewDatabase];
         [_SDK.chatManager loadDataFromDatabase];
-        [self callBackJsonWithFunction:@"onConnected" parameter:nil];
+        [self callBackJSONWithFunction:@"onConnected" parameter:nil];
 
     }
 }
 #pragma mark - 连接状态回调
--(void)disconnectedError:(NSInteger)errorCode{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
+- (void)disconnectedError:(NSInteger)errorCode{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:[NSString stringWithFormat: @"%ld", (long)errorCode] forKey:@"error"];
     
-    [self callBackJsonWithFunction:@"onDisconnected" parameter:dict];
+    [self callBackJSONWithFunction:@"onDisconnected" parameter:dict];
 }
 
 
--(void)didRemovedFromServer{
+- (void)didRemovedFromServer{
     [_SDK.chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
         
     } onQueue:nil];
     [self disconnectedError:1];
 }
 
--(void)didLoginFromOtherDevice{
+- (void)didLoginFromOtherDevice{
     [_SDK.chatManager asyncLogoffWithUnbindDeviceToken:NO completion:^(NSDictionary *info, EMError *error) {
         
     } onQueue:nil];
@@ -292,17 +298,25 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
         return;
     }
     if (connectionState == eEMConnectionConnected){
-        [self callBackJsonWithFunction:@"onConnected" parameter:nil];
+        [self callBackJSONWithFunction:@"onConnected" parameter:nil];
         return;
     }
 }
 #pragma mark - Message回调
 
--(void)didReceiveMessage:(EMMessage *)message{
+- (void)didReceiveMessage:(EMMessage *)message{
       NSDictionary *dict = [self analyzeEMMessage:message];
-    
+    UIApplicationState state = [UIApplication sharedApplication].applicationState;
+    if (state != UIApplicationStateActive && self.isShowNotificationInBackgroud ) {
+        UILocalNotification *notif = [[UILocalNotification alloc]init];
+        notif.alertBody = @"您有一条新消息";
+        notif.repeatCalendar = 0;
+        notif.soundName = UILocalNotificationDefaultSoundName;
+        [[UIApplication sharedApplication]presentLocalNotificationNow:notif];
+    }
+
     [self playSoundAndVibration];
-    [self callBackJsonWithFunction:@"onNewMessage" parameter:dict];
+    [self callBackJSONWithFunction:@"onNewMessage" parameter:dict];
     
 }
 - (void)didReceiveOfflineMessages:(NSArray *)offlineMessages{
@@ -313,14 +327,14 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 }
 - (void)didReceiveCmdMessage:(EMMessage *)cmdMessage{
  
-    NSMutableDictionary *dict=[NSMutableDictionary dictionaryWithCapacity:3];
-    NSDictionary *dictMessage =[self analyzeEMMessage:cmdMessage];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
+    NSDictionary *dictMessage = [self analyzeEMMessage:cmdMessage];
     [dict setValue:cmdMessage.messageId forKey:@"msgId"];
     [dict setValue:dictMessage forKey:@"message"];
     EMCommandMessageBody *body = (EMCommandMessageBody *)cmdMessage.messageBodies.lastObject;
     [dict setValue:body.action forKey:@"action"];
     //[self playSoundAndVibration];
-    [self callBackJsonWithFunction:@"onCmdMessageReceive" parameter:dict];
+    [self callBackJSONWithFunction:@"onCmdMessageReceive" parameter:dict];
 }
 
 
@@ -332,26 +346,26 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 }
 
 
--(void)didReceiveHasReadResponse:(EMReceipt *)resp{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
+- (void)didReceiveHasReadResponse:(EMReceipt *)resp{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     [dict setValue:resp.chatId forKey:@"msgId"];
     [dict setValue:resp.from forKey:@"username"];
     
-    [self callBackJsonWithFunction:@"onAckMessage" parameter:dict];
+    [self callBackJSONWithFunction:@"onAckMessage" parameter:dict];
 }
 
 
--(void)didReceiveHasDeliveredResponse:(EMReceipt *)resp{
+- (void)didReceiveHasDeliveredResponse:(EMReceipt *)resp{
     
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     [dict setValue:resp.chatId forKey:@"msgId"];
     [dict setValue:resp.from forKey:@"username"];
-    [self callBackJsonWithFunction:@"onDeliveryMessage" parameter:dict];
+    [self callBackJSONWithFunction:@"onDeliveryMessage" parameter:dict];
 }
 
 - (void)didSendMessage:(EMMessage *)message
                  error:(EMError *)error{
-    NSMutableDictionary *dict=[NSMutableDictionary dictionary];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     
     if(!error){
         
@@ -366,74 +380,74 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
         [dict setValue:error.description forKey:@"errorStr"];
     }
     [dict setValue:[self analyzeEMMessage:message] forKey:@"message"];
-    [self callBackJsonWithFunction:@"onMessageSent" parameter:dict];
+    [self callBackJSONWithFunction:@"onMessageSent" parameter:dict];
     
 }
 
 #pragma mark - friend回调
--(void)didReceiveBuddyRequest:(NSString *)username message:(NSString *)message{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
+- (void)didReceiveBuddyRequest:(NSString *)username message:(NSString *)message{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     [dict setValue:message forKey:@"reason"];
     [dict setValue:username forKey:@"username"];
-    [self callBackJsonWithFunction:@"onContactInvited" parameter:dict];
+    [self callBackJSONWithFunction:@"onContactInvited" parameter:dict];
 }
 
--(void)didAcceptedByBuddy:(NSString *)username{
+- (void)didAcceptedByBuddy:(NSString *)username{
     
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:username forKey:@"username"];
     
-    [self callBackJsonWithFunction:@"onContactAgreed" parameter:dict];
+    [self callBackJSONWithFunction:@"onContactAgreed" parameter:dict];
 }
--(void)didRejectedByBuddy:(NSString *)username{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
+- (void)didRejectedByBuddy:(NSString *)username{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:username forKey:@"username"];
     
-    [self callBackJsonWithFunction:@"onContactRefused" parameter:dict];
+    [self callBackJSONWithFunction:@"onContactRefused" parameter:dict];
     
 }
 
 #pragma mark - group回调
--(void)didReceiveGroupRejectFrom:(NSString *)groupId
+- (void)didReceiveGroupRejectFrom:(NSString *)groupId
                          invitee:(NSString *)username
                           reason:(NSString *)reason
                            error:(EMError *)error{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
     [dict setValue:groupId forKey:@"groupId"];
     [dict setValue:username forKey:@"invitee"];
     [dict setValue:reason forKey:@"reason"];
-    [self callBackJsonWithFunction:@"onInvitationDeclined" parameter:dict];
+    [self callBackJSONWithFunction:@"onInvitationDeclined" parameter:dict];
     
 }
 
 - (void)group:(EMGroup *)group didLeave:(EMGroupLeaveReason)reason error:(EMError *)error{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:1];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:group.groupId forKey:@"groupId"];
     [dict setValue:group.groupSubject forKey:@"groupName"];
     
     //群组被销毁
     if(reason == eGroupLeaveReason_Destroyed){
-        [self callBackJsonWithFunction:@"onGroupDestroy" parameter:dict];
+        [self callBackJSONWithFunction:@"onGroupDestroy" parameter:dict];
         
     }else if(reason == eGroupLeaveReason_BeRemoved){
         //用户被移除
-        [self callBackJsonWithFunction:@"onUserRemoved" parameter:dict];
+        [self callBackJSONWithFunction:@"onUserRemoved" parameter:dict];
     }
 }
 
--(void)didReceiveApplyToJoinGroup:(NSString *)groupId
+- (void)didReceiveApplyToJoinGroup:(NSString *)groupId
                         groupname:(NSString *)groupname
                     applyUsername:(NSString *)username
                            reason:(NSString *)reason
                             error:(EMError *)error{
     if(!error){
-        NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
         [dict setValue:groupId forKey:@"groupId"];
         [dict setValue:groupname forKey:@"groupName"];
         [dict setValue:username forKey:@"applyer"];
         [dict setValue:reason forKey:@"reason"];
         [self playSoundAndVibration];
-        [self callBackJsonWithFunction:@"onApplicationReceived" parameter:dict];
+        [self callBackJSONWithFunction:@"onApplicationReceived" parameter:dict];
     }
     
     
@@ -444,35 +458,35 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
                                    error:(EMError *)error
 {
     if(!error){
-        NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
-        EMError *error2=nil;
-        EMGroup *group=[_SDK.chatManager fetchGroupInfo:groupId error:&error2];
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
+        EMError *error2 = nil;
+        EMGroup *group = [_SDK.chatManager fetchGroupInfo:groupId error:&error2];
         [dict setValue:groupId forKey:@"groupId"];
         [dict setValue:groupname forKey:@"groupName"];
         [dict setValue:group.owner forKey:@"accepter"];
-        [self callBackJsonWithFunction:@"onApplicationAccept" parameter:dict];
+        [self callBackJSONWithFunction:@"onApplicationAccept" parameter:dict];
     }
 }
 
--(void)didReceiveRejectApplyToJoinGroupFrom:(NSString *)fromId
+- (void)didReceiveRejectApplyToJoinGroupFrom:(NSString *)fromId
                                   groupname:(NSString *)groupname
                                      reason:(NSString *)reason
                                       error:(EMError *)error{
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:3];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
     [dict setValue:fromId forKey:@"decliner"];
     [dict setValue:groupname forKey:@"groupName"];
     [dict setValue:reason forKey:@"reason"];
-    [self callBackJsonWithFunction:@"onApplicationDeclined" parameter:dict];
+    [self callBackJSONWithFunction:@"onApplicationDeclined" parameter:dict];
     
 }
 
--(void)didFetchAllPublicGroups:(NSArray *)groups
+- (void)didFetchAllPublicGroups:(NSArray *)groups
                          error:(EMError *)error{
     
-    NSMutableDictionary *dict =[NSMutableDictionary dictionaryWithCapacity:2];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     if(!error){
         [dict setValue:@"0" forKey:@"result"];
-        NSMutableArray *grouplist=[NSMutableArray arrayWithCapacity:10] ;
+        NSMutableArray *grouplist = [NSMutableArray arrayWithCapacity:10] ;
         for (EMGroup  *group in groups){
             [grouplist addObject:[self analyzeEMGroup:group]];
         }
@@ -481,33 +495,33 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
     }else{
         [dict setValue:@"1" forKey:@"result"];
     }
-    [self callBackJsonWithFunction:@"cbGetAllPublicGroupsFromServer" parameter:dict];
+    [self callBackJSONWithFunction:@"cbGetAllPublicGroupsFromServer" parameter:dict];
 }
 
 - (void)groupDidUpdateInfo:(EMGroup *)group error:(EMError *)error{
     
     if(!error){
-        NSDictionary *dict =[self analyzeEMGroup:group];
-        [self callBackJsonWithFunction:@"onGroupUpdateInfo" parameter:dict];
+        NSDictionary *dict = [self analyzeEMGroup:group];
+        [self callBackJSONWithFunction:@"onGroupUpdateInfo" parameter:dict];
         
     }
 }
 #pragma mark - Call
--(void)callSessionStatusChanged:(EMCallSession *)callSession
+- (void)callSessionStatusChanged:(EMCallSession *)callSession
                    changeReason:(EMCallStatusChangedReason)reason
                           error:(EMError *)error{
     
     
     if(!error){
-        static BOOL callReceive =   YES;
+        static BOOL callReceive = YES;
 
         if(callReceive) {
             self.callSession = callSession;
             
-            NSMutableDictionary *dictCallReceive =[NSMutableDictionary dictionary];
+            NSMutableDictionary *dictCallReceive = [NSMutableDictionary dictionary];
             [dictCallReceive setValue:callSession.sessionId forKey:@"callId"];
             [dictCallReceive setValue:callSession.sessionChatter forKey:@"from"];
-            NSString *callType=nil;
+            NSString *callType = nil;
             
             switch (callSession.type) {
                 case eCallSessionTypeAudio:
@@ -526,8 +540,8 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
             
             [dictCallReceive setValue:callType forKey:@"callType"];
             
-            [self callBackJsonWithFunction:@"onCallReceive" parameter:dictCallReceive];
-            callReceive=NO;
+            [self callBackJSONWithFunction:@"onCallReceive" parameter:dictCallReceive];
+            callReceive = NO;
         }
             
         
@@ -535,30 +549,30 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 
         
         
-        NSMutableDictionary *dictCallStateChanged =[NSMutableDictionary dictionary];
-        NSString *callState=nil;
+        NSMutableDictionary *dictCallStateChanged = [NSMutableDictionary dictionary];
+        NSString *callState = nil;
         switch (callSession.status) {
             case eCallSessionStatusDisconnected:
-                callState =@"4";
-                callReceive=YES;
+                callState = @"4";
+                callReceive = YES;
                 break;
             case eCallSessionStatusRinging:
-                callState =@"6";
+                callState = @"6";
                 break;
             case eCallSessionStatusAnswering:
-                callState =@"7";
+                callState = @"7";
                 break;
             case eCallSessionStatusPausing:
-                callState =@"5";
+                callState = @"5";
                 break;
             case eCallSessionStatusConnected:
-                callState =@"2";
+                callState = @"2";
                 break;
             case eCallSessionStatusAccepted:
-                callState =@"3";
+                callState = @"3";
                 break;
             case eCallSessionStatusConnecting:
-                callState =@"1";
+                callState = @"1";
                 break;
 
             default:
@@ -568,7 +582,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
         
         [dictCallStateChanged setValue:callState forKey:@"state"];
         
-        [self callBackJsonWithFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
+        [self callBackJSONWithFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
     }
 }
 
@@ -595,17 +609,17 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
                 noDisturbStatus = @"0";
                 break;
         }
-        NSString *displayStyle=@"";
+        NSString *displayStyle = @"";
         if(options.displayStyle == ePushNotificationDisplayStyle_simpleBanner){
-            displayStyle=@"0";
+            displayStyle = @"0";
         }else if(options.displayStyle == ePushNotificationDisplayStyle_messageSummary){
-            displayStyle=@"1";
+            displayStyle = @"1";
         }
         
         [dict setValue:displayStyle forKey:@"displayStyle"];
         [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
-        self.apnsOptions=options;
-        [self callBackJsonWithFunction:@"cbUpdatePushOptions" parameter:dict];
+        self.apnsOptions = options;
+        [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:dict];
     }
 }
 
@@ -614,7 +628,7 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
                                  error:(EMError *)error{
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:ignoredGroupList forKey:@"groupIds"];
-    [self callBackJsonWithFunction:@"cbIgnoreGroupPushNotification" parameter:dict];
+    [self callBackJSONWithFunction:@"cbIgnoreGroupPushNotification" parameter:dict];
 }
 
 
@@ -625,12 +639,12 @@ static const CGFloat kDefaultPlaySoundInterval = 3.0;
 }
 
 #pragma mark - CallBack Method
-const static NSString *kPluginName=@"uexEasemob";
--(void)callBackJsonWithFunction:(NSString *)functionName parameter:(id)obj{
+const static NSString *kPluginName = @"uexEasemob";
+- (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
     
     
     
-    NSString *paramStr=[obj JSONFragment];
+    NSString *paramStr = [obj JSONFragment];
     NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@('%@');}",kPluginName,functionName,kPluginName,functionName,paramStr];
     dispatch_async(self.callBackDispatchQueue, ^(void){
         [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
@@ -643,7 +657,7 @@ const static NSString *kPluginName=@"uexEasemob";
 
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message{
     
-    NSMutableDictionary *result =[NSMutableDictionary dictionary];
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
     
     switch (message.messageType) {
         case eMessageTypeChat:
@@ -652,8 +666,17 @@ const static NSString *kPluginName=@"uexEasemob";
 
             break;
         case eMessageTypeGroupChat:
-            [result setValue:message.groupSenderName forKey:@"from"];
-            [result setValue:message.from forKey:@"to"];
+            
+            if ([message.groupSenderName isEqual:message.from]) {
+                //来自自己的群消息，from为自己 to为群id，不做修改。(用于已发送消息的监听)
+                [result setValue:message.from forKey:@"from"];
+                [result setValue:message.to forKey:@"to"];
+            }else{
+                //来自他人的群消息，此处修改为from为消息实际发送人 to为群id (与Android保持一致)
+                [result setValue:message.groupSenderName forKey:@"from"];
+                [result setValue:message.from forKey:@"to"];
+            }
+
             
             break;
             
@@ -684,7 +707,7 @@ const static NSString *kPluginName=@"uexEasemob";
             break;
     }
     
-    NSString *type=@"";
+    NSString *type = @"";
     NSMutableDictionary *bodyDict = [NSMutableDictionary dictionary];
     id<IEMMessageBody> msgBody = message.messageBodies.firstObject;
     
@@ -700,7 +723,7 @@ const static NSString *kPluginName=@"uexEasemob";
         case eMessageBodyType_Image:
         {
             // 得到一个图片消息body
-            type =@"image";
+            type = @"image";
             EMImageMessageBody *body = ((EMImageMessageBody *)msgBody);
             [bodyDict setValue:body.remotePath forKey:@"remotePath"];
             [bodyDict setValue:body.secretKey forKey:@"secretKey"];
@@ -746,7 +769,7 @@ const static NSString *kPluginName=@"uexEasemob";
             break;
         case eMessageBodyType_File:
         {
-            type=@"file";
+            type = @"file";
             EMFileMessageBody *body = (EMFileMessageBody *)msgBody;
             [bodyDict setValue:body.remotePath forKey:@"remotePath"];
             [bodyDict setValue:body.secretKey forKey:@"secretKey"];
@@ -775,7 +798,7 @@ const static NSString *kPluginName=@"uexEasemob";
 - (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation{
     
     
-    NSMutableDictionary *result =[NSMutableDictionary dictionary];
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
     [result setValue:conversation.chatter forKey:@"chatter"];
     switch (conversation.conversationType) {
         case eConversationTypeChat:
@@ -828,7 +851,7 @@ const static NSString *kPluginName=@"uexEasemob";
 
 
 - (NSDictionary *)analyzeEMGroup:(EMGroup *)group{
-    NSMutableDictionary *result =[NSMutableDictionary dictionary];
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
     [result setValue:group.groupSubject forKey:@"groupSubject"];
     [result setValue:group.groupSubject forKey:@"groupName"];
     [result setValue:group.groupDescription forKey:@"groupDescription"];
@@ -836,36 +859,36 @@ const static NSString *kPluginName=@"uexEasemob";
     [result setValue:group.owner forKey:@"owner"];
     [result setValue:group.isPushNotificationEnabled?@(YES):@(NO) forKey:@"isPushNotificationEnabled"];
     [result setValue:group.isBlocked?@(YES):@(NO) forKey:@"isBlock"];
-    id isPublic =@"";
-    id allowInvites =@"";
-    id membersOnly =@"";
+    id isPublic = @"";
+    id allowInvites = @"";
+    id membersOnly = @"";
 
     switch (group.groupSetting.groupStyle) {
         case eGroupStyle_PrivateOnlyOwnerInvite:
-            isPublic =@(NO);
-            allowInvites =@(NO);
-            membersOnly =@(YES);
+            isPublic = @(NO);
+            allowInvites = @(NO);
+            membersOnly = @(YES);
             break;
         case eGroupStyle_PrivateMemberCanInvite:
-            isPublic =@(NO);
-            allowInvites =@(YES);
-            membersOnly =@(YES);
+            isPublic = @(NO);
+            allowInvites = @(YES);
+            membersOnly = @(YES);
             
             break;
         case eGroupStyle_PublicJoinNeedApproval:
-            isPublic =@(YES);
-            allowInvites =@(YES);
-            membersOnly =@(YES);
+            isPublic = @(YES);
+            allowInvites = @(YES);
+            membersOnly = @(YES);
             break;
         case eGroupStyle_PublicOpenJoin :
-            isPublic =@(YES);
-            allowInvites =@(YES);
-            membersOnly =@(NO);
+            isPublic = @(YES);
+            allowInvites = @(YES);
+            membersOnly = @(NO);
             break;
         case eGroupStyle_PublicAnonymous:
-            isPublic =@(YES);
-            allowInvites =@(YES);
-            membersOnly =@(NO);
+            isPublic = @(YES);
+            allowInvites = @(YES);
+            membersOnly = @(NO);
             break;
             
         default:

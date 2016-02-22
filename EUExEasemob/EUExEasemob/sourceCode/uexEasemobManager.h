@@ -24,10 +24,10 @@ extern NSString * const uexEasemobExtraInfoKey;
 @property (nonatomic,assign) BOOL isPlaySound;
 @property (nonatomic,assign) BOOL isPlayVibration;
 @property (nonatomic,assign) BOOL messageNotification;
-
+@property (nonatomic,assign) BOOL hasRegisteredAPNs;
 
 @property (nonatomic,assign) BOOL isAutoLoginEnabled;
-
+@property (nonatomic,assign) BOOL isShowNotificationInBackgroud;
 @property (nonatomic,strong) dispatch_queue_t callBackDispatchQueue;
 
 
@@ -40,7 +40,7 @@ extern NSString *const cEMChatTypeChatRoom;
 + (instancetype)sharedInstance;
 -(void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
 -(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName;
--(void) callBackJsonWithFunction:(NSString *)functionName parameter:(id)obj;
+-(void) callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj;
 
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message;
 - (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation;
