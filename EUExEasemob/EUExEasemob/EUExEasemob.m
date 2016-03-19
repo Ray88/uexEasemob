@@ -1119,11 +1119,25 @@ var chatterInfo = {
 - (void)joinGroup:(NSMutableArray *)inArguments{
     id joinGroupInfo = [self getDataFromJSON:inArguments[0]];
     if(![joinGroupInfo isKindOfClass:[NSDictionary class]]) return;
-    [self.sharedInstance.chatManager asyncApplyJoinPublicGroup:[joinGroupInfo objectForKey:@"groupId"]  withGroupname:[joinGroupInfo objectForKey:@"groupName"] message:[joinGroupInfo objectForKey:@"reason"] completion:^(EMGroup *group, EMError *error) {
-        if (!error) {
-            // NSLog(@"申请成功");
-        }
-    } onQueue:nil];
+    NSString *groupId = joinGroupInfo[@"groupId"];
+    NSString *groupName = joinGroupInfo[@"groupName"];
+    NSString *reason = joinGroupInfo[@"reason"];
+    if (!reason) {
+        [self.sharedInstance.chatManager asyncJoinPublicGroup:groupId completion:^(EMGroup *group, EMError *error) {
+            if (!error) {
+                // NSLog(@"加入成功");
+            }
+        } onQueue:nil];
+    }else{
+        [self.sharedInstance.chatManager asyncApplyJoinPublicGroup:groupId  withGroupname:groupName message:reason completion:^(EMGroup *group, EMError *error) {
+            if (!error) {
+                // NSLog(@"申请成功");
+            }
+        } onQueue:nil];
+    }
+    
+    
+
 }
 
 /*
