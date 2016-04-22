@@ -1,10 +1,14 @@
-//
-//  EMCDDeviceManager+Remind.m
-//  ChatDemo-UI2.0
-//
-//  Created by dujiepeng on 5/14/15.
-//  Copyright (c) 2015 dujiepeng. All rights reserved.
-//
+/************************************************************
+ *  * EaseMob CONFIDENTIAL
+ * __________________
+ * Copyright (C) 2013-2014 EaseMob Technologies. All rights reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of EaseMob Technologies.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from EaseMob Technologies.
+ */
 
 #import "EMCDDeviceManager+Remind.h"
 
@@ -21,7 +25,7 @@ void EMSystemSoundFinishedPlayingCallback(SystemSoundID sound_id, void* user_dat
 - (SystemSoundID)playNewMessageSound
 {
     // 要播放的音频文件地址
-    NSURL *bundlePath = [[NSBundle mainBundle] URLForResource:@"EaseMob" withExtension:@"bundle"];
+    NSURL *bundlePath = [[NSBundle mainBundle] URLForResource:@"EaseUIResource" withExtension:@"bundle"];
     NSURL *audioPath = [[NSBundle bundleWithURL:bundlePath] URLForResource:@"in" withExtension:@"caf"];
     // 创建系统声音，同时返回一个ID
     SystemSoundID soundID;

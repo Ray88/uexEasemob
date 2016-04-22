@@ -7,17 +7,19 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "EaseMob.h"
+#import "EMSDK.h"
+#import "EMClient+Call.h"
+#import "EMCallSession.h"
 #import "EMCDDeviceManager.h"
 #import "EMCDDeviceManagerDelegate.h"
 
 
 extern NSString * const uexEasemobExtraInfoKey;
-@interface uexEasemobManager : NSObject <IChatManagerDelegate,EMCallManagerDelegate,EMCDDeviceManagerDelegate>
+@interface uexEasemobManager : NSObject <EMClientDelegate,EMChatManagerDelegate,EMCallManagerDelegate,EMCDDeviceManagerDelegate,EMContactManagerDelegate,EMGroupManagerDelegate,EMCDDeviceManagerProximitySensorDelegate,EMChatroomManagerDelegate>
 
-@property (nonatomic,weak)EaseMob *SDK;
+@property (nonatomic,weak)EMClient *SDK;
 @property (nonatomic,strong)EMCallSession *callSession;
-@property (nonatomic,strong)EMPushNotificationOptions *apnsOptions;
+//@property (nonatomic,strong)EMPushOptions *apnsOptions;
 @property (nonatomic,weak) EMCDDeviceManager *EMDevice;
 @property (nonatomic,strong) NSDictionary *remoteLaunchDict;
 @property (nonatomic,strong) NSDate *lastPlaySoundDate;
@@ -28,6 +30,7 @@ extern NSString * const uexEasemobExtraInfoKey;
 
 @property (nonatomic,assign) BOOL isAutoLoginEnabled;
 @property (nonatomic,assign) BOOL isShowNotificationInBackgroud;
+@property (nonatomic,assign) BOOL noDeliveryNotification;
 @property (nonatomic,strong) dispatch_queue_t callBackDispatchQueue;
 
 

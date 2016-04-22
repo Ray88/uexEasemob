@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.20" build="20">
-        <info>20:修复加入公开群会失败的问题</info>
+        uexName="uexEasemob" version="3.0.21" build="21">
+        <info>21:升级环信IM SDK到3.1.1</info>
+        <build>20:修复加入公开群会失败的问题</build>
         <build>19:修复onMessageSent中群组信息错误的问题;setNotifyBySoundAndVibrate支持后台通知</build>
         <build>18:修复透传消息也会提示用户的问题</build>
         <build>17:修复getMessageHistory接口传入startMsgId但pagesize为0时取不到所有messages的问题</build>

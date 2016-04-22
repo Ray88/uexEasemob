@@ -1,28 +1,27 @@
-//
-//  EMCDDeviceManager+Media.m
-//  ChatDemo-UI2.0
-//
-//  Created by dujiepeng on 5/14/15.
-//  Copyright (c) 2015 dujiepeng. All rights reserved.
-//
+/************************************************************
+ *  * EaseMob CONFIDENTIAL
+ * __________________
+ * Copyright (C) 2013-2014 EaseMob Technologies. All rights reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of EaseMob Technologies.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from EaseMob Technologies.
+ */
 
 #import "EMCDDeviceManager+Media.h"
 #import "EMAudioPlayerUtil.h"
 #import "EMAudioRecorderUtil.h"
 #import "EMVoiceConverter.h"
-
+#import "DemoErrorCode.h"
 
 typedef NS_ENUM(NSInteger, EMAudioSession){
     EM_DEFAULT = 0,
     EM_AUDIOPLAYER,
     EM_AUDIORECORDER
 };
-typedef NS_ENUM(NSInteger, EMAudioError){
-    EMErrorFileTypeConvertionFailure = 900001,
-    EMErrorAudioRecordNotStarted,
-    EMErrorAudioRecordDurationTooShort,
-    EMErrorAudioRecordStoping
-};
+
 @implementation EMCDDeviceManager (Media)
 #pragma mark - AudioPlayer
 // 播放音频
@@ -47,7 +46,7 @@ typedef NS_ENUM(NSInteger, EMAudioError){
         BOOL covertRet = [self convertAMR:aFilePath toWAV:wavFilePath];
         if (!covertRet) {
             if (completon) {
-                completon([NSError errorWithDomain:@"File format conversion failed"
+                completon([NSError errorWithDomain:NSEaseLocalizedString(@"error.initRecorderFail", @"File format conversion failed")
                                               code:EMErrorFileTypeConvertionFailure
                                           userInfo:nil]);
             }
@@ -99,7 +98,7 @@ typedef NS_ENUM(NSInteger, EMAudioError){
     // 判断当前是否是录音状态
     if ([self isRecording]) {
         if (completion) {
-            error = [NSError errorWithDomain:@"Record voice is not over yet"
+            error = [NSError errorWithDomain:NSEaseLocalizedString(@"error.recordStoping", @"Record voice is not over yet")
                                         code:EMErrorAudioRecordStoping
                                     userInfo:nil];
             completion(error);
@@ -109,8 +108,8 @@ typedef NS_ENUM(NSInteger, EMAudioError){
     
     // 文件名不存在
     if (!fileName || [fileName length] == 0) {
-        error = [NSError errorWithDomain:@"File name not exist"
-                                    code:EMErrorAttachmentNotFound
+        error = [NSError errorWithDomain:NSEaseLocalizedString(@"error.notFound", @"File path not exist")
+                                    code:-1
                                 userInfo:nil];
         completion(error);
         return ;
@@ -149,7 +148,7 @@ typedef NS_ENUM(NSInteger, EMAudioError){
     // 当前是否在录音
     if(![self isRecording]){
         if (completion) {
-            error = [NSError errorWithDomain:@"Recording has not yet begun"
+            error = [NSError errorWithDomain:NSEaseLocalizedString(@"error.recordNotBegin", @"Recording has not yet begun")
                                         code:EMErrorAudioRecordNotStarted
                                     userInfo:nil];
             completion(nil,0,error);
@@ -162,7 +161,7 @@ typedef NS_ENUM(NSInteger, EMAudioError){
     
     if([_recorderEndDate timeIntervalSinceDate:_recorderStartDate] < [EMCDDeviceManager recordMinDuration]){
         if (completion) {
-            error = [NSError errorWithDomain:@"Recording time is too short"
+            error = [NSError errorWithDomain:NSEaseLocalizedString(@"error.recordTooShort", @"Recording time is too short")
                                         code:EMErrorAudioRecordDurationTooShort
                                     userInfo:nil];
             completion(nil,0,error);
@@ -241,8 +240,8 @@ typedef NS_ENUM(NSInteger, EMAudioError){
                                    withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
                                          error:&error];
         if(!success || error){
-            error = [NSError errorWithDomain:@"Failed to initialize AVAudioPlayer"
-                                        code:EMErrorInitFailure
+            error = [NSError errorWithDomain:NSEaseLocalizedString(@"error.initPlayerFail", @"Failed to initialize AVAudioPlayer")
+                                        code:-1
                                     userInfo:nil];
             return error;
         }

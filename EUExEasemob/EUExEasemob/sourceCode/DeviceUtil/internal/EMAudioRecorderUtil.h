@@ -1,13 +1,21 @@
-//
-//  EMAudioRecorderUtil.h
-//  ChatDemo-UI2.0
-//
-//  Created by dujiepeng on 5/8/15.
-//  Copyright (c) 2015 dujiepeng. All rights reserved.
-//
+/************************************************************
+ *  * EaseMob CONFIDENTIAL
+ * __________________
+ * Copyright (C) 2013-2014 EaseMob Technologies. All rights reserved.
+ *
+ * NOTICE: All information contained herein is, and remains
+ * the property of EaseMob Technologies.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from EaseMob Technologies.
+ */
 
 #import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
+
+
+#define NSEaseLocalizedString(key, comment) [[NSBundle bundleWithURL:[[NSBundle mainBundle] URLForResource:@"EaseUIResource" withExtension:@"bundle"]] localizedStringForKey:(key) value:@"" table:nil]
+
 @interface EMAudioRecorderUtil : NSObject
 
 // 当前是否正在录音

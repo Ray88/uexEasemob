@@ -2,64 +2,76 @@
 <uexplugins>
     <plugin name="uexEasemob">
         
-    <method name="initEasemob"></method>
-    <method name="login"></method>
-    <method name="logout"></method>
-    <method name="registerUser"></method>
-    <method name="getConversationByName"></method>
-    <method name="sendText"></method>
-    <method name="sendVoice"></method>
-    <method name="sendPicture"></method>
-    <method name="sendLocationMsg"></method>
-    <method name="sendFile"></method>
-    <method name="getMessageHistory"></method>
-    <method name="getUnreadMsgCount"></method>
-    <method name="resetUnreadMsgCount"></method>
-    <method name="deleteConversation"></method>
-    <method name="removeMessage"></method>
-    <method name="deleteAllConversation"></method>
-    <method name="setNotifyBySoundAndVibrate"></method>
-    <method name="getContactUserNames"></method>
-    <method name="addContact"></method>
-    <method name="deleteContact"></method>
-    <method name="acceptInvitation"></method>
-    <method name="refuseInvitation"></method>
-    <method name="getBlackListUsernames"></method>
-    <method name="addUserToBlackList"></method>
-    <method name="deleteUserFromBlackList"></method>
-    <method name="createPrivateGroup"></method>
-    <method name="createPublicGroup"></method>
-    <method name="addUsersToGroup"></method>
-    <method name="removeUserFromGroup"></method>
-    <method name="joinGroup"></method>
-    <method name="exitFromGroup"></method>
-    <method name="exitAndDeleteGroup"></method>
-    <method name="getGroupsFromServer"></method>
-    <method name="getAllPublicGroupsFromServer"></method>
-    <method name="getGroup"></method>
-    <method name="blockGroupMessage"></method>
-    <method name="unblockGroupMessage"></method>
-    <method name="changeGroupName"></method>
-    <method name="makeVoiceCall"></method>
-    <method name="answerCall"></method>
-    <method name="rejectCall"></method>
-    <method name="endCall"></method>
-    <method name="sendCmdMessage"></method>
-    <method name="updateCurrentUserNickname"></method>
-    <method name="getLoginInfo"></method>
-    <method name="registerRemoteNotification"></method>
-    <method name="updatePushOptions"></method>
-    <method name="ignoreGroupPushNotification"></method>
-    <method name="getChatterInfo"></method>
-    <method name="setIsAutoLoginEnabled"></method>
-    <method name="sendVideo"></method>
-    <method name="sendHasReadResponseForMessage"></method>
-    <method name="getMessageById"></method>
-    <method name="getTotalUnreadMsgCount"></method>
-    <method name="getRecentChatters"></method>
-
+        <method name="initEasemob"></method>
+        <method name="login"></method>
+        <method name="logout"></method>
+        <method name="registerUser"></method>
+        
+        <method name="getConversationByName"></method>
+        <method name="sendText"></method>
+        <method name="sendVoice"></method>
+        <method name="sendPicture"></method>
+        <method name="sendLocationMsg"></method>
+        <method name="sendFile"></method>
+        <method name="getMessageHistory"></method>
+        <method name="getUnreadMsgCount"></method>
+        <method name="resetUnreadMsgCount"></method>
+        <method name="deleteConversation"></method>
+        <method name="removeMessage"></method>
+        <method name="deleteAllConversation"></method>
+        <method name="setNotifyBySoundAndVibrate"></method>
+        <method name="sendCmdMessage"></method>
+        
+        <method name="getContactUserNames"></method>
+        <method name="addContact"></method>
+        <method name="deleteContact"></method>
+        <method name="acceptInvitation"></method>
+        <method name="refuseInvitation"></method>
+        <method name="getBlackListUsernames"></method>
+        <method name="addUserToBlackList"></method>
+        <method name="deleteUserFromBlackList"></method>
+        
+        <method name="createPrivateGroup"></method>
+        <method name="createPublicGroup"></method>
+        <method name="addUsersToGroup"></method>
+        <method name="removeUserFromGroup"></method>
+        <method name="joinGroup"></method>
+        <method name="exitFromGroup"></method>
+        <method name="exitAndDeleteGroup"></method>
+        <method name="getGroupsFromServer"></method>
+        <method name="getAllPublicGroupsFromServer"></method>
+        <method name="getGroup"></method>
+        <method name="blockGroupMessage"></method>
+        <method name="unblockGroupMessage"></method>
+        <method name="changeGroupName"></method>
+        <method name="blockUser"></method>
+        <method name="unblockUser"></method>
+        <method name="getBlockedUsers"></method>
+        <method name="acceptJoinApplication"></method>
+        <method name="declineJoinApplication"></method>
+        <method name="acceptInvitationFromGroup"></method>
+        <method name="declineInvitationFromGroup"></method>
+        
+        <method name="makeVoiceCall"></method>
+        <method name="answerCall"></method>
+        <method name="rejectCall"></method>
+        <method name="endCall"></method>
+        
+        <method name="updateCurrentUserNickname"></method>
+        <method name="getLoginInfo"></method>
+        <method name="registerRemoteNotification"></method>
+        <method name="updatePushOptions"></method>
+        <method name="ignoreGroupPushNotification"></method>
+        <method name="getChatterInfo"></method>
+        <method name="setIsAutoLoginEnabled"></method>
+        <method name="sendVideo"></method>
+        <method name="sendHasReadResponseForMessage"></method>
+        <method name="getMessageById"></method>
+        <method name="getTotalUnreadMsgCount"></method>
+        <method name="getRecentChatters"></method>
+        
         
     </plugin>
     
-	
+    
 </uexplugins>
