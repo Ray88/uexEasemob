@@ -596,17 +596,20 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
 const static NSString *kPluginName = @"uexEasemob";
 - (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
     
-    NSString *paramStr = [obj JSONFragment];
-    NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@('%@');}",kPluginName,functionName,kPluginName,functionName,paramStr];
+    NSString *paramStr = [[obj JSONFragment] JSONFragment];
+    NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@(%@);}",kPluginName,functionName,kPluginName,functionName,paramStr];
     dispatch_async(self.callBackDispatchQueue, ^(void){
-        if([EUtility respondsToSelector:@selector(browserView:callbackWithFunctionKeyPath:arguments:completion:)]){
-            [EUtility browserView:[EUtility rootBrwoserView]
-      callbackWithFunctionKeyPath:[NSString stringWithFormat:@"%@.%@",kPluginName,functionName]
-                        arguments:paramStr?@[paramStr]:nil
-                       completion:nil];
-        }else{
-            [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
-        }
+//        if([EUtility respondsToSelector:@selector(browserView:callbackWithFunctionKeyPath:arguments:completion:)]){
+//            [EUtility browserView:[EUtility rootBrwoserView]
+//      callbackWithFunctionKeyPath:[NSString stringWithFormat:@"%@.%@",kPluginName,functionName]
+//                        arguments:paramStr?@[paramStr]:nil
+//                       completion:nil];
+//        }else{
+//            [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
+//        }
+        
+        
+         [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
         
     });
 
