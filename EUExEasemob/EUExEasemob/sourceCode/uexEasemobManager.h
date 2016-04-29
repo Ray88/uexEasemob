@@ -42,7 +42,7 @@ extern NSString *const cEMChatTypeChatRoom;
 
 + (instancetype)sharedInstance;
 -(void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
--(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName;
+-(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName withInfo:(id)info;
 -(void) callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj;
 
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message;

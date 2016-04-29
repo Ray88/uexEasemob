@@ -21,13 +21,25 @@
  *  会话类型
  *
  *  \~english
- *   Conversation type
+ *  Conversation type
  */
 typedef enum{
     EMConversationTypeChat  = 0,    /*! \~chinese 单聊会话 \~english Chat */
     EMConversationTypeGroupChat,    /*! \~chinese 群聊会话 \~english Group chat */
-    EMConversationTypeChatRoom,     /*! \~chinese 聊天室会话 \~english Chatroom chat */
-}EMConversationType;
+    EMConversationTypeChatRoom      /*! \~chinese 聊天室会话 \~english Chatroom chat */
+} EMConversationType;
+
+/*
+ *  \~chinese
+ *  消息搜索方向
+ *
+ *  \~english
+ *  Message search direction
+ */
+typedef enum{
+    EMMessageSearchDirectionUp  = 0,    /*! \~chinese 向上搜索 \~english Search older messages */
+    EMMessageSearchDirectionDownload    /*! \~chinese 向下搜索 \~english Search newer messages */
+} EMMessageSearchDirection;
 
 @class EMMessage;
 
@@ -74,7 +86,7 @@ typedef enum{
  *  \~english
  *  Conversation extend property
  */
-@property (nonatomic, strong) NSDictionary *ext;
+@property (nonatomic, copy) NSDictionary *ext;
 
 /*!
  *  \~chinese
@@ -190,7 +202,7 @@ typedef enum{
  *
  *  @result Extend properties update result, YES: success, No: fail
  */
-- (BOOL)updateConversationExtToDB;
+- (BOOL)updateConversationExtToDB __deprecated_msg("setExt: will update extend properties to DB");
 
 /*!
  *  \~chinese
@@ -215,6 +227,7 @@ typedef enum{
  *
  *  @param aMessageId  参考消息的ID
  *  @param aLimit      获取的条数
+ *  @param aDirection  消息搜索方向
  *
  *  @result 消息列表<EMMessage>
  *
@@ -223,11 +236,13 @@ typedef enum{
  *
  *  @param aMessageId  Reference message's ID
  *  @param aLimit      Count of messages to load
+ *  @param aDirection  Message search direction
  *
  *  @result Message list<EMMessage>
  */
 - (NSArray *)loadMoreMessagesFromId:(NSString *)aMessageId
-                              limit:(int)aLimit;
+                              limit:(int)aLimit
+                          direction:(EMMessageSearchDirection)aDirection;
 
 /*!
  *  \~chinese
@@ -236,6 +251,8 @@ typedef enum{
  *  @param aType        消息类型
  *  @param aTimestamp   参考时间戳
  *  @param aLimit       获取的条数
+ *  @param aSender      消息发送方，如果为空则忽略
+ *  @param aDirection   消息搜索方向
  *
  *  @result 消息列表<EMMessage>
  *
@@ -245,35 +262,68 @@ typedef enum{
  *  @param aType        Message type to load
  *  @param aTimestamp   Reference timestamp
  *  @param aLimit       Count of messages to load
+ *  @param aSender      Message sender, will ignore it if it's empty
+ *  @param aDirection   Message search direction
  *
  *  @result Message list<EMMessage>
  */
 - (NSArray *)loadMoreMessagesWithType:(EMMessageBodyType)aType
                                before:(long long)aTimestamp
-                                limit:(int)aLimit;
+                                limit:(int)aLimit
+                                 from:(NSString*)aSender
+                            direction:(EMMessageSearchDirection)aDirection;
 
 /*!
  *  \~chinese
  *  从数据库获取包含指定内容的消息，取到的消息按时间排序，如果参考的时间戳为负数，则从最新消息向前取，如果aLimit是负数，则获取所有符合条件的消息
  *
- *  @param aKeywords    搜索关键字
+ *  @param aKeywords    搜索关键字，如果为空则忽略
  *  @param aTimestamp   参考时间戳
  *  @param aLimit       获取的条数
+ *  @param aSender      消息发送方，如果为空则忽略
+ *  @param aDirection   消息搜索方向
  *
  *  @result 消息列表<EMMessage>
  *
  *  \~english
  *  Get more messages contain specified keywords from DB, result messages are sorted by received time, if reference timestamp is negative, will fetch message from latest message, andd will fetch all messages that meet the condition if aLimit is negative
  *
- *  @param aType        Message type to load
+ *  @param aKeywords    Search content, will ignore it if it's empty
  *  @param aTimestamp   Reference timestamp
  *  @param aLimit       Count of messages to load
+ *  @param aSender      Message sender, will ignore it if it's empty
+*  @param aDirection    Message search direction
  *
  *  @result Message list<EMMessage>
  */
 - (NSArray *)loadMoreMessagesContain:(NSString*)aKeywords
                                before:(long long)aTimestamp
-                                limit:(int)aLimit;
+                                limit:(int)aLimit
+                                 from:(NSString*)aSender
+                            direction:(EMMessageSearchDirection)aDirection;
+
+/*!
+ *  \~chinese
+ *  从数据库获取指定时间段内的消息，取到的消息按时间排序，为了防止占用太多内存，用户应当制定加载消息的最大数
+ *
+ *  @param aStartTimestamp  毫秒级开始时间
+ *  @param aEndTimestamp    结束时间
+ *  @param aMaxCount        加载消息最大数
+ *
+ *  @result 消息列表<EMMessage>
+ *
+ *  \~english
+ *  Load messages from DB in duration, result messages are sorted by receive time, user should limit the max count to load to avoid memory issue
+ *
+ *  @param aStartTimestamp  Start time's timestamp in miliseconds
+ *  @param aEndTimestamp    End time's timestamp in miliseconds
+ *  @param aMaxCount        Message search direction
+ *
+ *  @result Message list<EMMessage>
+ */
+- (NSArray *)loadMoreMessagesFrom:(long long)aStartTimestamp
+                               to:(long long)aEndTimestamp
+                         maxCount:(int)aMaxCount;
 
 /*!
  *  \~chinese

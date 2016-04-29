@@ -41,7 +41,7 @@
  *  \~english
  *  Command parameters, only for compatable with old version, use EMMessage's extend attribute instead
  */
-@property (nonatomic, copy, readonly) NSArray *params;
+@property (nonatomic, copy) NSArray *params;
 
 /*!
  *  \~chinese

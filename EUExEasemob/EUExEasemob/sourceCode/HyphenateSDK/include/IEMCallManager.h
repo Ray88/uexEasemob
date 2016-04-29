@@ -239,5 +239,17 @@
  */
 - (void)resumeVoiceAndVideoTransfer:(NSString *)aSessionId;
 
+/*!
+ *  \~chinese
+ *  设置开启或者关闭自适应视频码率,默认是关闭状态
+ *
+ *  @param aFlag   YES开启,NO关闭
+ *
+ *  \~english
+ *  open or close video adaptive,default is close
+ *
+ *  @param aFlag   YES is open,NO is close
+ */
+- (void)setVideoAdaptive:(BOOL)aFlag;
 
 @end

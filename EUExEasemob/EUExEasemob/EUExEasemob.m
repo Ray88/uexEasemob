@@ -108,7 +108,7 @@
             _mgr.isAutoLoginEnabled = NO;
         }
     }
-    [_mgr initEasemobWithAppKey:[initInfo objectForKey:@"appKey"] apnsCertName:[initInfo objectForKey:@"apnsCertName"]];
+    [_mgr initEasemobWithAppKey:[initInfo objectForKey:@"appKey"] apnsCertName:[initInfo objectForKey:@"apnsCertName"] withInfo:initInfo];
 }
 
 
@@ -659,7 +659,7 @@
         pagesize = [[info objectForKey:@"pagesize"] intValue];
     }
     
-    messages = [conversation loadMoreMessagesFromId:startMsgId limit:pagesize];
+    messages = [conversation loadMoreMessagesFromId:startMsgId limit:pagesize direction:EMMessageSearchDirectionUp];
     for(EMMessage *msg in messages){
         [msgList addObject:[_mgr analyzeEMMessage:msg]];
     }
@@ -1237,6 +1237,9 @@ var chatterInfo = {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error=nil;
         EMGroup *group=[self.sharedInstance.groupManager addOccupants:newmembers toGroup:[groupInfo objectForKey:@"groupId"] welcomeMessage:[groupInfo objectForKey:@"inviteMessage"] error:&error];
+        if(error){
+            
+        }
     });
 
 }
@@ -1581,7 +1584,7 @@ var chatterInfo = {
         }
     });
 }
-
+//3.0.22新增接口
 - (void)acceptJoinApplication:(NSMutableArray *)inArguments{
     if(inArguments.count<1){
         return;
@@ -1590,8 +1593,12 @@ var chatterInfo = {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error = [self.sharedInstance.groupManager acceptJoinApplication:[info objectForKey:@"groupId"] applicant:[info objectForKey:@"username"]];
+        if(error){
+            
+        }
     });
 }
+//3.0.22新增接口
 - (void)declineJoinApplication:(NSMutableArray *)inArguments{
     if(inArguments.count<1){
         return;
@@ -1600,9 +1607,12 @@ var chatterInfo = {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error = [self.sharedInstance.groupManager declineJoinApplication:[info objectForKey:@"groupId"] applicant:[info objectForKey:@"username"] reason:[info objectForKey:@"reason"]];
+        if(error){
+            
+        }
     });
 }
-
+//3.0.22新增接口
 - (void)acceptInvitationFromGroup:(NSMutableArray *)inArguments{
     if(inArguments.count<1){
         return;
@@ -1612,8 +1622,12 @@ var chatterInfo = {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error=nil;
         EMGroup *group = [self.sharedInstance.groupManager acceptInvitationFromGroup:[info objectForKey:@"groupId"] inviter:[info objectForKey:@"username"] error:&error];
+        if(error){
+            
+        }
     });
 }
+//3.0.22新增接口
 - (void)declineInvitationFromGroup:(NSMutableArray *)inArguments{
     if(inArguments.count<1){
         return;
@@ -1622,6 +1636,9 @@ var chatterInfo = {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error= [self.sharedInstance.groupManager declineInvitationFromGroup:[info objectForKey:@"groupId"] inviter:[info objectForKey:@"username"] reason:[info objectForKey:@"reason"]];
+        if(error){
+            
+        }
     });
 }
 /*

@@ -70,7 +70,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
 
 
 #pragma mark - 初始化SDK
-- (void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName{
+-(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName withInfo:(id)info{
     if(!_SDK){
         _SDK = [EMClient sharedClient];
         EMOptions *opts=[EMOptions optionsWithAppkey:appKey];
@@ -78,6 +78,11 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         opts.apnsCertName=certName;
         opts.enableConsoleLog=NO;
         opts.enableDeliveryAck=YES;
+        if([info objectForKey:@"isAutoAcceptGroupInvitation"]){
+            if([[info objectForKey:@"isAutoAcceptGroupInvitation"] integerValue]==2){
+                opts.isAutoAcceptGroupInvitation=NO;
+            }
+        }
         
         [_SDK initializeSDKWithOptions:opts];
         
@@ -368,16 +373,6 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     [dict setValue:aInvitee forKey:@"inviter"];
     [self callBackJSONWithFunction:@"onInvitationAccpted" parameter:dict];
 }
-- (void)didJoinedGroup:(EMGroup *)aGroup
-               inviter:(NSString *)aInviter
-               message:(NSString *)aMessage{
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
-    [dict setValue:aGroup.groupId forKey:@"groupId"];
-    [dict setValue:@"" forKey:@"reason"];
-    [dict setValue:aInviter forKey:@"inviter"];
-    [self callBackJSONWithFunction:@"onInvitationAccpted" parameter:dict];
-    
-}
 
 - (void)didReceiveLeavedGroup:(EMGroup *)aGroup
                        reason:(EMGroupLeaveReason)reason{
@@ -446,6 +441,24 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         NSDictionary *result=[self analyzeEMGroup:group];
         [self callBackJSONWithFunction:@"onGroupUpdateInfo" parameter:result];
     }
+}
+
+//3.0.22新增接口
+- (void)didJoinedGroup:(EMGroup *)aGroup inviter:(NSString *)aInviter message:(NSString *)aMessage{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:aGroup.groupId forKey:@"groupId"];
+    [dict setValue:aGroup.subject forKey:@"groupName"];
+    [dict setValue:aMessage forKey:@"meaasge"];
+    [dict setValue:aInviter forKey:@"username"];
+    [self callBackJSONWithFunction:@"onDidJoinedGroup" parameter:dict];
+}
+//3.0.22新增接口
+- (void)didReceiveGroupInvitation:(NSString *)aGroupId inviter:(NSString *)aInviter message:(NSString *)aMessage{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:aGroupId forKey:@"groupId"];
+    [dict setValue:aMessage forKey:@"meaasge"];
+    [dict setValue:aInviter forKey:@"username"];
+    [self callBackJSONWithFunction:@"onReceiveGroupInvitation" parameter:dict];
 }
 
 #pragma mark - Call
@@ -609,7 +622,7 @@ const static NSString *kPluginName = @"uexEasemob";
 //        }
         
         
-         [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
+        [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
         
     });
 
@@ -774,7 +787,7 @@ const static NSString *kPluginName = @"uexEasemob";
     
     
     NSMutableArray *msgList = [NSMutableArray arrayWithCapacity:1];
-    NSArray *messages = [conversation loadMoreMessagesFromId:nil limit:10000];
+    NSArray *messages = [conversation loadMoreMessagesFromId:nil limit:10000 direction:EMMessageSearchDirectionUp];
     for(EMMessage *msg in messages){
         [msgList addObject:[self analyzeEMMessage:msg]];
     }
