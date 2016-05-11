@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="3.0.22" build="22">
-        <info>22:initEasemob接口新增isAutoAcceptGroupInvitation参数；消息接口新增extObj参数以适配环信客服功能；group内新增群组加人的相关接口</info>
+        uexName="uexEasemob" version="3.0.23" build="23">
+        <info>23:删除EaseUIResource.bundle内会引起上架失败的info.plist</info>
+        <build>22:initEasemob接口新增isAutoAcceptGroupInvitation参数；消息接口新增extObj参数以适配环信客服功能；group内新增群组加人的相关接口</build>
         <build>21:升级环信IM SDK到3.1.1</build>
         <build>20:修复加入公开群会失败的问题</build>
         <build>19:修复onMessageSent中群组信息错误的问题;setNotifyBySoundAndVibrate支持后台通知</build>
