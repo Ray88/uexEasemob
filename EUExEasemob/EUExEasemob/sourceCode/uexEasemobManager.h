@@ -32,7 +32,7 @@ extern NSString * const uexEasemobExtraInfoKey;
 @property (nonatomic,assign) BOOL isShowNotificationInBackgroud;
 @property (nonatomic,assign) BOOL noDeliveryNotification;
 @property (nonatomic,strong) dispatch_queue_t callBackDispatchQueue;
-
+@property(nonatomic,strong) ACJSFunctionRef *func;
 
 extern NSString *const cEMChatTypeUser;
 extern NSString *const cEMChatTypeGroup;
@@ -44,7 +44,7 @@ extern NSString *const cEMChatTypeChatRoom;
 -(void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
 -(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName withInfo:(id)info;
 -(void) callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj;
-
+- (void)callBackJSONWithoutFunction:(NSString *)functionName parameter:(id)obj;
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message;
 - (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation;
 - (NSDictionary *)analyzeEMGroup:(EMGroup *)group;

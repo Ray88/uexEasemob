@@ -12,6 +12,7 @@
 
 @interface uexEasemobManager()
 @property (nonatomic,strong)NSDictionary *launchOptions;
+
 @end
 
 
@@ -219,7 +220,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:[NSString stringWithFormat: @"%ld", (long)errorCode] forKey:@"error"];
     
-    [self callBackJSONWithFunction:@"onDisconnected" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onDisconnected" parameter:dict];
 }
 
 
@@ -257,7 +258,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         }
         
         [self playSoundAndVibration];
-        [self callBackJSONWithFunction:@"onNewMessage" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onNewMessage" parameter:dict];
     }
     
 }
@@ -272,7 +273,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         EMCmdMessageBody *body = (EMCmdMessageBody *)cmdMessage.body;
         [dict setValue:body.action forKey:@"action"];
         //[self playSoundAndVibration];
-        [self callBackJSONWithFunction:@"onCmdMessageReceive" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onCmdMessageReceive" parameter:dict];
     }
 }
 
@@ -284,7 +285,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         [dict setValue:message.messageId forKey:@"msgId"];
         [dict setValue:message.from forKey:@"username"];
         
-        [self callBackJSONWithFunction:@"onAckMessage" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onAckMessage" parameter:dict];
     }
 }
 
@@ -298,7 +299,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
         [dict setValue:message.messageId forKey:@"msgId"];
         [dict setValue:message.from forKey:@"username"];
-        [self callBackJSONWithFunction:@"onDeliveryMessage" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onDeliveryMessage" parameter:dict];
     }
 }
 
@@ -326,17 +327,17 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
 #pragma mark - friend回调
 
 - (void)didReceiveAddedFromUsername:(NSString *)username{
-    [self callBackJSONWithFunction:@"onContactAdded" parameter:@[username]];
+    [self callBackJSONWithoutFunction:@"onContactAdded" parameter:@[username]];
 }
 - (void)didReceiveDeletedFromUsername:(NSString *)username{
-    [self callBackJSONWithFunction:@"onContactDeleted" parameter:@[username]];
+    [self callBackJSONWithoutFunction:@"onContactDeleted" parameter:@[username]];
 }
 - (void)didReceiveFriendInvitationFromUsername:(NSString *)username message:(NSString *)message{
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     [dict setValue:message forKey:@"reason"];
     [dict setValue:username forKey:@"username"];
     [self playSoundAndVibration];
-    [self callBackJSONWithFunction:@"onContactInvited" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onContactInvited" parameter:dict];
 }
 
 - (void)didReceiveAgreedFromUsername:(NSString *)username{
@@ -344,13 +345,13 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:username forKey:@"username"];
     
-    [self callBackJSONWithFunction:@"onContactAgreed" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onContactAgreed" parameter:dict];
 }
 - (void)didReceiveDeclinedFromUsername:(NSString *)username{
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:username forKey:@"username"];
     
-    [self callBackJSONWithFunction:@"onContactRefused" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onContactRefused" parameter:dict];
     
 }
 
@@ -382,11 +383,11 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     
     //群组被销毁
     if(reason == EMGroupLeaveReasonDestroyed){
-        [self callBackJSONWithFunction:@"onGroupDestroy" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onGroupDestroy" parameter:dict];
         
     }else if(reason == EMGroupLeaveReasonBeRemoved){
         //用户被移除
-        [self callBackJSONWithFunction:@"onUserRemoved" parameter:dict];
+        [self callBackJSONWithoutFunction:@"onUserRemoved" parameter:dict];
     }
 }
 
@@ -399,7 +400,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     [dict setValue:aApplicant forKey:@"applyer"];
     [dict setValue:aReason forKey:@"reason"];
     [self playSoundAndVibration];
-    [self callBackJSONWithFunction:@"onApplicationReceived" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onApplicationReceived" parameter:dict];
     
 }
 
@@ -418,7 +419,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     }
     [dict setValue:groupId forKey:@"groupId"];
     [dict setValue:aReason forKey:@"reason"];
-    [self callBackJSONWithFunction:@"onApplicationDeclined" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onApplicationDeclined" parameter:dict];
     
 }
 - (void)didReceiveAcceptedJoinGroup:(EMGroup *)aGroup{
@@ -426,7 +427,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     [dict setValue:aGroup.groupId forKey:@"groupId"];
     [dict setValue:aGroup.subject forKey:@"groupName"];
     [dict setValue:aGroup.owner forKey:@"accepter"];
-    [self callBackJSONWithFunction:@"onApplicationAccept" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onApplicationAccept" parameter:dict];
 }
 //- (void)groupDidUpdateInfo:(EMGroup *)group error:(EMError *)error{
 //    
@@ -439,7 +440,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
 - (void)didUpdateGroupList:(NSArray *)aGroupList{
     for(EMGroup *group in aGroupList){
         NSDictionary *result=[self analyzeEMGroup:group];
-        [self callBackJSONWithFunction:@"onGroupUpdateInfo" parameter:result];
+        [self callBackJSONWithoutFunction:@"onGroupUpdateInfo" parameter:result];
     }
 }
 
@@ -450,7 +451,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     [dict setValue:aGroup.subject forKey:@"groupName"];
     [dict setValue:aMessage forKey:@"meaasge"];
     [dict setValue:aInviter forKey:@"username"];
-    [self callBackJSONWithFunction:@"onDidJoinedGroup" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onDidJoinedGroup" parameter:dict];
 }
 //3.0.22新增接口
 - (void)didReceiveGroupInvitation:(NSString *)aGroupId inviter:(NSString *)aInviter message:(NSString *)aMessage{
@@ -458,7 +459,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     [dict setValue:aGroupId forKey:@"groupId"];
     [dict setValue:aMessage forKey:@"meaasge"];
     [dict setValue:aInviter forKey:@"username"];
-    [self callBackJSONWithFunction:@"onReceiveGroupInvitation" parameter:dict];
+    [self callBackJSONWithoutFunction:@"onReceiveGroupInvitation" parameter:dict];
 }
 
 #pragma mark - Call
@@ -484,15 +485,15 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     }
     [dictCallReceive setValue:callType forKey:@"callType"];
     
-    [self callBackJSONWithFunction:@"onCallReceive" parameter:dictCallReceive];
+    [self callBackJSONWithoutFunction:@"onCallReceive" parameter:dictCallReceive];
 }
 - (void)didReceiveCallConnected:(EMCallSession *)aSession{
     
-    [self callBackJSONWithFunction:@"onCallStateChanged" parameter:@{@"state":@"2"}];
+    [self callBackJSONWithoutFunction:@"onCallStateChanged" parameter:@{@"state":@"2"}];
 }
 - (void)didReceiveCallAccepted:(EMCallSession *)aSession{
     
-    [self callBackJSONWithFunction:@"onCallStateChanged" parameter:@{@"state":@"3"}];
+    [self callBackJSONWithoutFunction:@"onCallStateChanged" parameter:@{@"state":@"3"}];
 }
 - (void)didReceiveCallTerminated:(EMCallSession *)aSession
                           reason:(EMCallEndReason)aReason
@@ -519,7 +520,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
     
     [dictCallStateChanged setValue:callState forKey:@"state"];
     
-    [self callBackJSONWithFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
+    [self callBackJSONWithoutFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
 }
 - (void)didReceiveCallNetworkChanged:(EMCallSession *)callSession
                               status:(EMCallNetworkStatus)aStatus{
@@ -548,7 +549,7 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
         }
         [dictCallStateChanged setValue:callState forKey:@"state"];
         
-        [self callBackJSONWithFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
+        [self callBackJSONWithoutFunction:@"onCallStateChanged" parameter:dictCallStateChanged];
     
 }
 
@@ -609,8 +610,9 @@ NSString *const uexEasemobExtraInfoKey = @"ext";
 const static NSString *kPluginName = @"uexEasemob";
 - (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
     
-    NSString *paramStr = [[obj JSONFragment] JSONFragment];
-    NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@(%@);}",kPluginName,functionName,kPluginName,functionName,paramStr];
+    NSString *paramStr = [obj ac_JSONFragment];
+    //NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@(%@);}",kPluginName,functionName,kPluginName,functionName,paramStr];
+    NSString *keyPath = [NSString stringWithFormat:@"%@.%@",kPluginName,functionName];
     dispatch_async(self.callBackDispatchQueue, ^(void){
 //        if([EUtility respondsToSelector:@selector(browserView:callbackWithFunctionKeyPath:arguments:completion:)]){
 //            [EUtility browserView:[EUtility rootBrwoserView]
@@ -622,10 +624,34 @@ const static NSString *kPluginName = @"uexEasemob";
 //        }
         
         
-        [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
-        
+        //[EUtility evaluatingJavaScriptInRootWnd:jsonStr];
+        [AppCanRootWebViewEngine() callbackWithFunctionKeyPath:keyPath arguments:ACArgsPack(paramStr)];
+        [self.func executeWithArguments:ACArgsPack(obj)];
+         self.func = nil;
     });
 
+}
+- (void)callBackJSONWithoutFunction:(NSString *)functionName parameter:(id)obj{
+    
+    NSString *paramStr = [obj ac_JSONFragment];
+    //NSString *jsonStr = [NSString stringWithFormat:@"if(%@.%@ != null){%@.%@(%@);}",kPluginName,functionName,kPluginName,functionName,paramStr];
+    NSString *keyPath = [NSString stringWithFormat:@"%@.%@",kPluginName,functionName];
+    dispatch_async(self.callBackDispatchQueue, ^(void){
+        //        if([EUtility respondsToSelector:@selector(browserView:callbackWithFunctionKeyPath:arguments:completion:)]){
+        //            [EUtility browserView:[EUtility rootBrwoserView]
+        //      callbackWithFunctionKeyPath:[NSString stringWithFormat:@"%@.%@",kPluginName,functionName]
+        //                        arguments:paramStr?@[paramStr]:nil
+        //                       completion:nil];
+        //        }else{
+        //            [EUtility evaluatingJavaScriptInRootWnd:jsonStr];
+        //        }
+        
+        
+        //[EUtility evaluatingJavaScriptInRootWnd:jsonStr];
+        [AppCanRootWebViewEngine() callbackWithFunctionKeyPath:keyPath arguments:ACArgsPack(paramStr)];
+        
+    });
+    
 }
 
 

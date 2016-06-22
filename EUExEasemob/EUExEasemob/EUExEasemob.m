@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "EUExBase.h"
 #import "EUExEasemob.h"
 #import "uexEasemobManager.h"
 #import "EMCursorResult.h"
@@ -25,7 +24,7 @@
 
 @property (nonatomic,weak)EMClient * sharedInstance;
 
-
+@property(nonatomic,strong)ACJSFunctionRef *func;
 
 
 @end
@@ -35,12 +34,32 @@
 
 
 
--(id)initWithBrwView:(EBrowserView *)eInBrwView{
-    self = [super initWithBrwView:eInBrwView];
-    if(self){
+//-(id)initWithBrwView:(EBrowserView *)eInBrwView{
+//    self = [super initWithBrwView:eInBrwView];
+//    if(self){
+//        self.mgr = [uexEasemobManager sharedInstance];
+//        self.sharedInstance = self.mgr.SDK;
+//
+//        if(!self.sharedInstance){
+//            [[NSNotificationCenter defaultCenter] addObserver:self
+//                                                     selector:@selector(initSettings)
+//                                                         name:@"uexEasemobInitSuccess"
+//                                                       object:nil];
+//        }
+//        
+//        
+//        if(_mgr.remoteLaunchDict){
+//            [self callBackJSONWithFunction:@"onApnsLaunch" parameter:_mgr.remoteLaunchDict];
+//            _mgr.remoteLaunchDict = nil;
+//        }
+//    }
+//    return  self;
+//}
+-(id)initWithWebViewEngine:(id<AppCanWebViewEngineObject>)engine{
+    if (self = [super initWithWebViewEngine:engine]) {
         self.mgr = [uexEasemobManager sharedInstance];
         self.sharedInstance = self.mgr.SDK;
-
+        
         if(!self.sharedInstance){
             [[NSNotificationCenter defaultCenter] addObserver:self
                                                      selector:@selector(initSettings)
@@ -50,13 +69,13 @@
         
         
         if(_mgr.remoteLaunchDict){
-            [self callBackJSONWithFunction:@"onApnsLaunch" parameter:_mgr.remoteLaunchDict];
+            [self callBackJSONWithFunction:@"onApnsLaunch" parameter:_mgr.remoteLaunchDict Function:nil];
             _mgr.remoteLaunchDict = nil;
         }
-    }
-    return  self;
-}
 
+    }
+    return self;
+}
 - (void)clean{
 
 }
@@ -99,6 +118,7 @@
     if(inArguments.count<1){
         return;
     }
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     id initInfo = [self getDataFromJSON:inArguments[0]];
     if([initInfo objectForKey:@"isAutoLoginEnabled"]){
         id autoLogin = [initInfo objectForKey:@"isAutoLoginEnabled"];
@@ -108,6 +128,7 @@
             _mgr.isAutoLoginEnabled = NO;
         }
     }
+    _mgr.func = func;
     [_mgr initEasemobWithAppKey:[initInfo objectForKey:@"appKey"] apnsCertName:[initInfo objectForKey:@"apnsCertName"] withInfo:initInfo];
 }
 
@@ -143,7 +164,8 @@
         return;
     }
     id user = [self getDataFromJSON:inArguments[0]];
-
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
+   
     // 登录
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error=[self.sharedInstance loginWithUsername:[user objectForKey:@"username"] password:[user objectForKey:@"password"]];
@@ -156,13 +178,13 @@
             [dict setValue:@"登录成功" forKey:@"msg"];
             //[self getAPNsOptions];
             [_sharedInstance dataMigrationTo3];
-            [self callBackJSONWithFunction:@"onConnected" parameter:nil];
+           [self callBackJSONWithFunction:@"onConnected" parameter:nil];
         }else{
             [dict setValue:@"2" forKey:@"result"];
             [dict setValue:[NSString stringWithFormat:@"登录失败:%@%d",error.errorDescription,error.code] forKey:@"msg"];
             
         }
-        [self callBackJSONWithFunction:@"cbLogin" parameter:dict];
+        [self callBackJSONWithFunction:@"cbLogin" parameter:dict Function:func];
     });
 }
 
@@ -184,7 +206,7 @@
 //}
 
  - (void)logout:(NSMutableArray *)inArguments{
-     
+      ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
          EMError *error=[self.sharedInstance logout:YES];
          
@@ -196,7 +218,7 @@
              [dict setValue:@"2" forKey:@"result"];
              [dict setValue:@"登出失败" forKey:@"message"];;
          }
-         [self callBackJSONWithFunction:@"cbLogout" parameter:dict];
+         [self callBackJSONWithFunction:@"cbLogout" parameter:dict Function:func];
      });
 }
 
@@ -205,6 +227,7 @@
         return;
     }
     id user = [self getDataFromJSON:inArguments[0]];
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     if(!user){
         return;
     }
@@ -221,7 +244,7 @@
             [dict setValue:[NSString stringWithFormat:@"注册失败:%@%d",error.errorDescription,error.code] forKey:@"msg"];
         }
         
-        [self callBackJSONWithFunction:@"cbRegisterUser" parameter:dict];
+        [self callBackJSONWithFunction:@"cbRegisterUser" parameter:dict Function:func];
     });
     
 }
@@ -241,7 +264,7 @@
 - (void)getLoginInfo:(NSMutableArray *)inArguments{
     
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
-    
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     [dict setValue:(self.sharedInstance.isConnected?@"1":@"2")   forKey:@"isConnected"];
     [dict setValue:(self.sharedInstance.isLoggedIn?@"1":@"2")  forKey:@"isLoggedIn"];
     [dict setValue:(self.sharedInstance.isAutoLogin?@"1":@"2")  forKey:@"isAutoLoginEnabled"];
@@ -257,7 +280,7 @@
         
         [dict setValue:userInfo  forKey:@"userInfo"];
     }
-    [self callBackJSONWithFunction:@"cbGetLoginInfo" parameter:dict];
+    [self callBackJSONWithFunction:@"cbGetLoginInfo" parameter:dict Function:func];
     
 }
 
@@ -574,10 +597,11 @@
         return;
     }
     id info = [self getDataFromJSON:inArguments[0]];
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     if ([info objectForKey:@"msgId"]){
         EMMessage *msg = [self getMessage:[info objectForKey:@"msgId"]];
         NSDictionary *messageDict = [_mgr analyzeEMMessage:msg];
-        [self callBackJSONWithFunction:@"cbGetMessageById" parameter:messageDict];
+        [self callBackJSONWithFunction:@"cbGetMessageById" parameter:messageDict Function:func];
     }
     
 }
@@ -628,16 +652,17 @@
     if(inArguments.count<1){
         return;
     }
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     EMConversation *conversation = [self getConversation:inArguments];
-    [self cbGetConversationByName:conversation];
+    [self cbGetConversationByName:conversation Function:func];
 }
 
 
-- (void)cbGetConversationByName:(EMConversation *)conversation{
+- (void)cbGetConversationByName:(EMConversation *)conversation Function:(ACJSFunctionRef*)fun{
     
     NSDictionary *dict = [_mgr analyzeEMConversation:conversation];
     
-    [self callBackJSONWithFunction:@"cbGetConversationByName" parameter:dict];
+    [self callBackJSONWithFunction:@"cbGetConversationByName" parameter:dict Function:fun];
     
 }
 
@@ -647,6 +672,7 @@
         return;
     }
     id info = [self getDataFromJSON:inArguments[0]];
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     NSString *username = [info objectForKey:@"username"];
     if(!username) return;
     EMConversation *conversation = [self getConversation:inArguments];
@@ -663,7 +689,7 @@
     for(EMMessage *msg in messages){
         [msgList addObject:[_mgr analyzeEMMessage:msg]];
     }
-    [self callBackJSONWithFunction:@"cbGetMessageHistory" parameter:@{@"messages":msgList}];
+    [self callBackJSONWithFunction:@"cbGetMessageHistory" parameter:@{@"messages":msgList} Function:func];
 }
 
 
@@ -690,12 +716,13 @@
     if(inArguments.count<1){
         return;
     }
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     EMConversation *conversation = [self getConversation:inArguments];
     NSUInteger unreadMessageCount = [conversation unreadMessagesCount];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
     [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)unreadMessageCount] forKey:@"count"];
     
-    [self callBackJSONWithFunction:@"cbGetUnreadMsgCount" parameter:dict];
+    [self callBackJSONWithFunction:@"cbGetUnreadMsgCount" parameter:dict Function:func];
     
 }
 
@@ -793,6 +820,7 @@ var chatterInfo = {
 
 - (void)getChatterInfo:(NSMutableArray *)inArguments{
     
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         NSMutableArray *usernamelist = [NSMutableArray array];
         EMError *error = nil;
@@ -845,13 +873,13 @@ var chatterInfo = {
             [result addObject:chatter];
         }
         
-        [self callBackJSONWithFunction:@"cbGetChatterInfo" parameter:result];
+        [self callBackJSONWithFunction:@"cbGetChatterInfo" parameter:result Function:func];
     });
 }
 
 
 - (void)getRecentChatters:(NSMutableArray *)inArguments{
-    
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         NSArray *conversationArray = [_sharedInstance.chatManager loadAllConversationsFromDB];
         NSMutableArray *tmp = [NSMutableArray array];
@@ -906,7 +934,7 @@ var chatterInfo = {
                 if(!isInsert)[result addObject:dict];
             }
         }
-        [self callBackJSONWithFunction:@"cbGetRecentChatters" parameter:result];
+        [self callBackJSONWithFunction:@"cbGetRecentChatters" parameter:result Function:func];
         
 
     });
@@ -926,13 +954,13 @@ var chatterInfo = {
 
 - (void)getTotalUnreadMsgCount:(NSMutableArray *)inArguments{
     NSInteger count = 0;
-    
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     NSArray *convs=[self.sharedInstance.chatManager getAllConversations];
     for (EMConversation *conv in convs) {
         count=count+conv.unreadMessagesCount;
     }
     NSDictionary *result = [NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"%ld",(long)count] forKey:@"count"];
-    [self callBackJSONWithFunction:@"cbGetTotalUnreadMsgCount" parameter:result];
+    [self callBackJSONWithFunction:@"cbGetTotalUnreadMsgCount" parameter:result Function:func];
     
 }
  /*
@@ -986,8 +1014,8 @@ var chatterInfo = {
 	
  }
 */
-- (void)getContactUserNames:(NSMutableArray*)array{
-    
+- (void)getContactUserNames:(NSMutableArray*)inArguments{
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error;
         NSMutableArray *usernames = [NSMutableArray arrayWithCapacity:1];
@@ -996,7 +1024,7 @@ var chatterInfo = {
             for( NSString *buddy in users){
                 [usernames addObject:buddy];
             }
-            [self callBackJSONWithFunction:@"cbGetContactUserNames" parameter:usernames];
+            [self callBackJSONWithFunction:@"cbGetContactUserNames" parameter:usernames Function:func];
             
         }
     });
@@ -1079,18 +1107,19 @@ var chatterInfo = {
 }
 
 - (void)getBlackListUsernames:(NSMutableArray *)inArguments{
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error;
         NSArray * BlockedList = [self.sharedInstance.contactManager getBlackListFromServerWithError:&error];
         
-        [self cbGetBlackListUsernames:BlockedList];
+        [self cbGetBlackListUsernames:BlockedList Function:func];
     });
     
 }
 
-- (void)cbGetBlackListUsernames:(NSArray *)blockedList{
+- (void)cbGetBlackListUsernames:(NSArray *)blockedList Function:(ACJSFunctionRef*)func{
     
-    [self callBackJSONWithFunction:@"cbGetBlackListUsernames" parameter:blockedList];
+    [self callBackJSONWithFunction:@"cbGetBlackListUsernames" parameter:blockedList Function:func];
     
 }
 
@@ -1374,7 +1403,7 @@ var chatterInfo = {
     }
     
     id getGroup = [self getDataFromJSON:inArguments[0]];
-    
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
 
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
     NSArray *groups;
@@ -1388,7 +1417,7 @@ var chatterInfo = {
             [grouplist addObject:[_mgr analyzeEMGroup:group]];
         }
         [dict setValue:grouplist forKey:@"grouplist"];
-        [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict];
+        [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict Function:func];
     }else{
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
             
@@ -1404,7 +1433,7 @@ var chatterInfo = {
             }else{
                 [dict setValue:@"1" forKey:@"result"];
             }
-            [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict];
+            [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict Function:func];
         });
     }
     
@@ -1419,8 +1448,10 @@ var chatterInfo = {
     
     NSInteger pageSize = -1;
     NSString *cursor = nil;
+    ACJSFunctionRef *func = nil;
     if([inArguments count]>0){
         id info = [self getDataFromJSON:inArguments[0]];
+         func = JSFunctionArg(inArguments.lastObject);
         if([info objectForKey:@"pageSize"]&&[[info objectForKey:@"pageSize"] length]>0) pageSize = [[info objectForKey:@"pageSize"] integerValue];
         if([info objectForKey:@"cursor"] &&[[info objectForKey:@"cursor"] length]>0) cursor = [info objectForKey:@"cursor"];
     }
@@ -1441,7 +1472,7 @@ var chatterInfo = {
             [dict setValue:grouplist forKey:@"grouplist"];
             [dict setValue:result.cursor forKey:@"cursor"];
         }
-        [self callBackJSONWithFunction:@"cbGetAllPublicGroupsFromServer" parameter:dict];
+        [self callBackJSONWithFunction:@"cbGetAllPublicGroupsFromServer" parameter:dict Function:func];
     });
     
 }
@@ -1470,19 +1501,19 @@ var chatterInfo = {
         return;
     }
     id groupInfo = [self getDataFromJSON:inArguments[0]];
-    
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         
         EMError *error=nil;
         EMGroup *group= [self.sharedInstance.groupManager fetchGroupInfo:[groupInfo objectForKey:@"groupId"] includeMembersList:YES error:&error];
-        [self cbGetGroup:group error:error];
+        [self cbGetGroup:group error:error Function:func];
     });
 }
 
 - (void)cbGetGroup:(EMGroup *)group
-             error:(EMError *)error{
+             error:(EMError *)error Function:(ACJSFunctionRef*)func{
     if(!error){
-        [self callBackJSONWithFunction:@"cbGetGroup" parameter:[_mgr analyzeEMGroup:group]];
+        [self callBackJSONWithFunction:@"cbGetGroup" parameter:[_mgr analyzeEMGroup:group] Function:func];
     }
 }
 
@@ -1575,12 +1606,12 @@ var chatterInfo = {
         return;
     }
     id info = [self getDataFromJSON:inArguments[0]];
-    
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error = nil;
         NSArray *users= [self.sharedInstance.groupManager fetchGroupBansList:[info objectForKey:@"groupId"] error:&error];
         if(!error){
-            [self callBackJSONWithFunction:@"cbGetBlockedUsers" parameter:@{@"usernames":users}];
+            [self callBackJSONWithFunction:@"cbGetBlockedUsers" parameter:@{@"usernames":users} Function:func];
         }
     });
 }
@@ -1757,11 +1788,13 @@ var chatterInfo = {
 	errorInfo;//注册失败时的推送信息
  }
  */
+static EUExEasemob *easeMob = nil;
 - (void)registerRemoteNotification:(NSMutableArray *)inArguments{
     UIApplication *application = [UIApplication sharedApplication];
     application.applicationIconBadgeNumber = 0;
-    
-
+    easeMob = self;
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
+    easeMob.func = func;
     
 #if !TARGET_IPHONE_SIMULATOR
 
@@ -1788,6 +1821,7 @@ var chatterInfo = {
     [[EMClient sharedClient] bindDeviceToken:deviceToken];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:@"1" forKey:@"result"];
+    [uexEasemobManager sharedInstance].func = easeMob.func;
     [[uexEasemobManager sharedInstance] callBackJSONWithFunction:@"cbRegisterRemoteNotification" parameter:dict];
 }
 
@@ -1800,6 +1834,7 @@ var chatterInfo = {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:@"2" forKey:@"result"];
     [dict setValue:[error localizedDescription] forKey:@"errorInfo"];
+     [uexEasemobManager sharedInstance].func = easeMob.func;
     [[uexEasemobManager sharedInstance] callBackJSONWithFunction:@"cbRegisterRemoteNotification" parameter:dict];
     
 }
@@ -1811,6 +1846,7 @@ var chatterInfo = {
     }
     
     id info = [self getDataFromJSON:inArguments[0]];
+     ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     EMError *error;
     //EMPushOptions *options=[self.sharedInstance getPushOptionsFromServerWithError:&error];
     EMPushOptions *options = [self.sharedInstance pushOptions];
@@ -1877,7 +1913,7 @@ var chatterInfo = {
             //        [dict setValue:displayStyle forKey:@"displayStyle"];
             //        [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
             //        [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:dict];
-            [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:info];
+            [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:info Function:func];
         }
     });
 }
@@ -1886,6 +1922,7 @@ var chatterInfo = {
         return;
     }
     id info = [self getDataFromJSON:inArguments[0]];
+    ACJSFunctionRef *func = JSFunctionArg(inArguments.lastObject);
     BOOL isIgnore=NO;
     if([info objectForKey:@"isIgnore"]){
         if([[info objectForKey:@"isIgnore"] boolValue]==YES){
@@ -1897,7 +1934,7 @@ var chatterInfo = {
         EMError *error=[self.sharedInstance.groupManager ignoreGroupPush:[info objectForKey:@"groupId"] ignore:isIgnore];
         if(!error){
             NSArray *groups=[self.sharedInstance.groupManager getAllIgnoredGroupIds];
-            [self callBackJSONWithFunction:@"cbIgnoreGroupPushNotification" parameter:@{@"groupIds":groups}];
+            [self callBackJSONWithFunction:@"cbIgnoreGroupPushNotification" parameter:@{@"groupIds":groups} Function:func];
         }
     });
 }
@@ -1906,8 +1943,15 @@ var chatterInfo = {
 
 
 #pragma mark - private method
-- (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
+- (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj Function:(ACJSFunctionRef*)func{
+    _mgr.func = func;
     [_mgr callBackJSONWithFunction:functionName parameter:obj];
+   
+}
+- (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
+    
+    [_mgr callBackJSONWithoutFunction:functionName parameter:obj];
+    
 }
 
 - (void)initSettings{

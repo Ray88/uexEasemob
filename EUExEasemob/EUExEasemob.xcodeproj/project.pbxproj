@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		21ED04F31D19387500D8D9C5 /* AppCanKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21ED04F21D19387500D8D9C5 /* AppCanKit.framework */; };
 		3C040E211D080CAD0071C537 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1D1D080CAD0071C537 /* libcrypto.a */; };
 		3C040E221D080CAD0071C537 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1E1D080CAD0071C537 /* libcurl.a */; };
 		3C040E231D080CAD0071C537 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1F1D080CAD0071C537 /* libssl.a */; };
@@ -43,6 +44,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		21ED04F21D19387500D8D9C5 /* AppCanKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AppCanKit.framework; sourceTree = "<group>"; };
 		3C040DF51D080CAD0071C537 /* EMCallLocalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallLocalView.h; sourceTree = "<group>"; };
 		3C040DF61D080CAD0071C537 /* EMCallManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallManagerDelegate.h; sourceTree = "<group>"; };
 		3C040DF71D080CAD0071C537 /* EMCallRemoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallRemoteView.h; sourceTree = "<group>"; };
@@ -118,7 +120,6 @@
 		3C5BB21F1CC788FA00A8F593 /* dec_if.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dec_if.h; sourceTree = "<group>"; };
 		3C5BB2201CC788FA00A8F593 /* if_rom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = if_rom.h; sourceTree = "<group>"; };
 		3C5BB2211CC788FA00A8F593 /* libopencore-amrwb.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libopencore-amrwb.a"; sourceTree = "<group>"; };
-		422C69371B2BB29C0036730B /* EUExBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBase.h; sourceTree = "<group>"; };
 		422C69381B2BB29C0036730B /* EUExBaseDefine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUExBaseDefine.h; sourceTree = "<group>"; };
 		422C69391B2BB29C0036730B /* EUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EUtility.h; sourceTree = "<group>"; };
 		422C693A1B2BB29C0036730B /* WidgetOneDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WidgetOneDelegate.h; sourceTree = "<group>"; };
@@ -147,6 +148,7 @@
 				3C5BB2571CC788FA00A8F593 /* libopencore-amrwb.a in Frameworks */,
 				3C040E221D080CAD0071C537 /* libcurl.a in Frameworks */,
 				3C040E341D0810440071C537 /* libHyphenateFullSDK_x86_64.a in Frameworks */,
+				21ED04F31D19387500D8D9C5 /* AppCanKit.framework in Frameworks */,
 				3C040E321D0810440071C537 /* libHyphenateFullSDK_armv7.a in Frameworks */,
 				3C040E331D0810440071C537 /* libHyphenateFullSDK_i386.a in Frameworks */,
 				3C5BB2561CC788FA00A8F593 /* libopencore-amrnb.a in Frameworks */,
@@ -322,7 +324,6 @@
 		422C69361B2BB29C0036730B /* engineHeader */ = {
 			isa = PBXGroup;
 			children = (
-				422C69371B2BB29C0036730B /* EUExBase.h */,
 				422C69381B2BB29C0036730B /* EUExBaseDefine.h */,
 				422C69391B2BB29C0036730B /* EUtility.h */,
 				422C693A1B2BB29C0036730B /* WidgetOneDelegate.h */,
@@ -333,6 +334,7 @@
 		422C693B1B2BB29C0036730B /* sourceCode */ = {
 			isa = PBXGroup;
 			children = (
+				21ED04F21D19387500D8D9C5 /* AppCanKit.framework */,
 				3C5BB1FD1CC788FA00A8F593 /* DeviceUtil */,
 				3C5BB2221CC788FA00A8F593 /* HyphenateSDK */,
 				422C69BF1B2BB4390036730B /* EUExEasemob_PrefixHeader.pch */,
@@ -541,6 +543,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CONFIGURATION_BUILD_DIR = $SRCROOT/uexEasemob;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/EUExEasemob/sourceCode",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = $SRCROOT/EUExEasemob/sourceCode/EUExEasemob_PrefixHeader.pch;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
@@ -562,6 +568,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CONFIGURATION_BUILD_DIR = $SRCROOT/uexEasemob;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/EUExEasemob/sourceCode",
+				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = $SRCROOT/EUExEasemob/sourceCode/EUExEasemob_PrefixHeader.pch;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
