@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version=“4.0.0” build="25”>
+        uexName="uexEasemob" version="4.0.0" build="25">
         <info>25:支持引擎4.0，函数入参</info>
         <build>24:升级SDK到3.1.3-支持IPv6</build>
         <build>23:删除EaseUIResource.bundle内会引起上架失败的info.plist</build>
