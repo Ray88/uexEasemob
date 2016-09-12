@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		21ED04F31D19387500D8D9C5 /* AppCanKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21ED04F21D19387500D8D9C5 /* AppCanKit.framework */; };
 		3C040E211D080CAD0071C537 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1D1D080CAD0071C537 /* libcrypto.a */; };
 		3C040E221D080CAD0071C537 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1E1D080CAD0071C537 /* libcurl.a */; };
 		3C040E231D080CAD0071C537 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C040E1F1D080CAD0071C537 /* libssl.a */; };
@@ -29,6 +28,7 @@
 		3C5BB2571CC788FA00A8F593 /* libopencore-amrwb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C5BB2211CC788FA00A8F593 /* libopencore-amrwb.a */; };
 		422C69BE1B2BB3E60036730B /* uexEasemobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 422C69BD1B2BB3E60036730B /* uexEasemobManager.m */; };
 		4230D7C81B2B846C00BB8D7B /* EUExEasemob.m in Sources */ = {isa = PBXBuildFile; fileRef = 4230D7C71B2B846C00BB8D7B /* EUExEasemob.m */; };
+		42B138D31D7FA27500122676 /* AppCanKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42B138D21D7FA27500122676 /* AppCanKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,7 +44,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		21ED04F21D19387500D8D9C5 /* AppCanKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AppCanKit.framework; sourceTree = "<group>"; };
 		3C040DF51D080CAD0071C537 /* EMCallLocalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallLocalView.h; sourceTree = "<group>"; };
 		3C040DF61D080CAD0071C537 /* EMCallManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallManagerDelegate.h; sourceTree = "<group>"; };
 		3C040DF71D080CAD0071C537 /* EMCallRemoteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EMCallRemoteView.h; sourceTree = "<group>"; };
@@ -137,6 +136,7 @@
 		4230D7C21B2B846C00BB8D7B /* libuexEasemob.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libuexEasemob.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		4230D7C51B2B846C00BB8D7B /* EUExEasemob.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EUExEasemob.h; sourceTree = "<group>"; };
 		4230D7C71B2B846C00BB8D7B /* EUExEasemob.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EUExEasemob.m; sourceTree = "<group>"; };
+		42B138D21D7FA27500122676 /* AppCanKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = AppCanKit.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,7 +148,7 @@
 				3C5BB2571CC788FA00A8F593 /* libopencore-amrwb.a in Frameworks */,
 				3C040E221D080CAD0071C537 /* libcurl.a in Frameworks */,
 				3C040E341D0810440071C537 /* libHyphenateFullSDK_x86_64.a in Frameworks */,
-				21ED04F31D19387500D8D9C5 /* AppCanKit.framework in Frameworks */,
+				42B138D31D7FA27500122676 /* AppCanKit.framework in Frameworks */,
 				3C040E321D0810440071C537 /* libHyphenateFullSDK_armv7.a in Frameworks */,
 				3C040E331D0810440071C537 /* libHyphenateFullSDK_i386.a in Frameworks */,
 				3C5BB2561CC788FA00A8F593 /* libopencore-amrnb.a in Frameworks */,
@@ -334,7 +334,6 @@
 		422C693B1B2BB29C0036730B /* sourceCode */ = {
 			isa = PBXGroup;
 			children = (
-				21ED04F21D19387500D8D9C5 /* AppCanKit.framework */,
 				3C5BB1FD1CC788FA00A8F593 /* DeviceUtil */,
 				3C5BB2221CC788FA00A8F593 /* HyphenateSDK */,
 				422C69BF1B2BB4390036730B /* EUExEasemob_PrefixHeader.pch */,
@@ -379,6 +378,7 @@
 		4230D7C41B2B846C00BB8D7B /* EUExEasemob */ = {
 			isa = PBXGroup;
 			children = (
+				42B138D21D7FA27500122676 /* AppCanKit.framework */,
 				422C69361B2BB29C0036730B /* engineHeader */,
 				422C693B1B2BB29C0036730B /* sourceCode */,
 				4230D7C51B2B846C00BB8D7B /* EUExEasemob.h */,
@@ -546,6 +546,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode",
+					"$(PROJECT_DIR)/EUExEasemob",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = $SRCROOT/EUExEasemob/sourceCode/EUExEasemob_PrefixHeader.pch;
@@ -571,6 +572,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/EUExEasemob/sourceCode",
+					"$(PROJECT_DIR)/EUExEasemob",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = $SRCROOT/EUExEasemob/sourceCode/EUExEasemob_PrefixHeader.pch;

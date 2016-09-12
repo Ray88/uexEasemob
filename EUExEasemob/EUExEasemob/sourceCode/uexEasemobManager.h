@@ -14,37 +14,48 @@
 #import "EMCDDeviceManagerDelegate.h"
 
 
-extern NSString * const uexEasemobExtraInfoKey;
-@interface uexEasemobManager : NSObject <EMClientDelegate,EMChatManagerDelegate,EMCallManagerDelegate,EMCDDeviceManagerDelegate,EMContactManagerDelegate,EMGroupManagerDelegate,EMCDDeviceManagerProximitySensorDelegate,EMChatroomManagerDelegate>
+
+extern NSString *const cEMChatTypeUser;
+extern NSString *const cEMChatTypeGroup;
+extern NSString *const cEMChatTypeChatRoom;
+extern NSString *const uexEasemobExtraInfoKey;
+extern NSString *const uexEasemobManagerInitSuccessNotificationKey;
+
+static inline NSString *cbName(NSString * func){
+    return [NSString stringWithFormat:@"uexEasemob.%@",func];
+}
+
+
+
+
+@interface uexEasemobManager : NSObject 
 
 @property (nonatomic,weak)EMClient *SDK;
 @property (nonatomic,strong)EMCallSession *callSession;
-//@property (nonatomic,strong)EMPushOptions *apnsOptions;
-@property (nonatomic,weak) EMCDDeviceManager *EMDevice;
+
+
 @property (nonatomic,strong) NSDictionary *remoteLaunchDict;
-@property (nonatomic,strong) NSDate *lastPlaySoundDate;
+
 @property (nonatomic,assign) BOOL isPlaySound;
 @property (nonatomic,assign) BOOL isPlayVibration;
 @property (nonatomic,assign) BOOL messageNotification;
 @property (nonatomic,assign) BOOL hasRegisteredAPNs;
 
-@property (nonatomic,assign) BOOL isAutoLoginEnabled;
+
 @property (nonatomic,assign) BOOL isShowNotificationInBackgroud;
 @property (nonatomic,assign) BOOL noDeliveryNotification;
-@property (nonatomic,strong) dispatch_queue_t callBackDispatchQueue;
-@property(nonatomic,strong) ACJSFunctionRef *func;
 
-extern NSString *const cEMChatTypeUser;
-extern NSString *const cEMChatTypeGroup;
-extern NSString *const cEMChatTypeChatRoom;
+
++ (instancetype)sharedManager;
 
 
 
-+ (instancetype)sharedInstance;
--(void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions;
--(void)initEasemobWithAppKey:(NSString *)appKey apnsCertName:(NSString *)certName withInfo:(id)info;
--(void) callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj;
-- (void)callBackJSONWithoutFunction:(NSString *)functionName parameter:(id)obj;
+
+
+- (EMError *)initializeEasemobWithOptions:(EMOptions *)option;
+
+- (void)callbackWithFunctionName:(NSString *)funcName obj:(id)obj;
+
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message;
 - (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation;
 - (NSDictionary *)analyzeEMGroup:(EMGroup *)group;
