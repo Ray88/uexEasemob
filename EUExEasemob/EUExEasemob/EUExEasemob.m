@@ -7,11 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "EUExBase.h"
 #import "EUExEasemob.h"
 #import "uexEasemobManager.h"
 #import "EMCursorResult.h"
-#import "JSON.h"
+#import <AppCanKit/ACEXTScope.h>
 
 
 
@@ -19,58 +18,63 @@
 
 
 @interface EUExEasemob()
-
-@property (nonatomic,weak) uexEasemobManager *mgr;
-
-
-@property (nonatomic,weak)EMClient * sharedInstance;
-
-
-
-
+@property (nonatomic,weak,readonly)uexEasemobManager *mgr;
+@property (nonatomic,weak,readonly)EMClient * sharedClient;
 @end
+
+
+#define UEX_LOG_ERROR(error) \
+    ACLogDebug(@"uexEasemob -> [%s]. error<%d>: %@",__func__,error.code,error.errorDescription)
 
 
 @implementation EUExEasemob
 
+static NSDictionary *apnsLaunchInfo = nil;
+static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDefaultsAPNSUsageKey";
 
-
--(id)initWithBrwView:(EBrowserView *)eInBrwView{
-    self = [super initWithBrwView:eInBrwView];
-    if(self){
-        self.mgr = [uexEasemobManager sharedInstance];
-        self.sharedInstance = self.mgr.SDK;
-
-        if(!self.sharedInstance){
-            [[NSNotificationCenter defaultCenter] addObserver:self
-                                                     selector:@selector(initSettings)
-                                                         name:@"uexEasemobInitSuccess"
-                                                       object:nil];
-        }
-        
-        
-        if(_mgr.remoteLaunchDict){
-            [self callBackJSONWithFunction:@"onApnsLaunch" parameter:_mgr.remoteLaunchDict];
-            _mgr.remoteLaunchDict = nil;
-        }
-    }
-    return  self;
+- (EMClient *)sharedClient{
+    return [uexEasemobManager sharedManager].SDK;
 }
 
+- (uexEasemobManager *)mgr{
+    return [uexEasemobManager sharedManager];
+}
+
+- (instancetype)initWithWebViewEngine:(id<AppCanWebViewEngineObject>)engine{
+    self = [super initWithWebViewEngine:engine];
+    if (self) {
+    }
+    return self;
+}
 - (void)clean{
 
 }
 
 - (void)dealloc{
-    [[NSNotificationCenter defaultCenter]removeObserver:self];
+
     [self clean];
     
 }
-+(BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
-    if (launchOptions) {
-        [[uexEasemobManager sharedInstance] didFinishLaunchingWithOptions:(NSDictionary *)launchOptions];
-    }
+
+
+
+
++ (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
+    apnsLaunchInfo = launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey];
+
     return YES;
+}
+
+
++ (void)rootPageDidFinishLoading{
+    if (!apnsLaunchInfo || ![[NSUserDefaults standardUserDefaults]boolForKey:kUexEasemobUserDefaultsAPNSUsageKey]) {
+        return;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[uexEasemobManager sharedManager] callbackWithFunctionName:@"onApnsLaunch" obj:apnsLaunchInfo];
+        apnsLaunchInfo = nil;
+
+    });
 }
 //从JSON字符串中获取数据
 - (id)getDataFromJSON:(NSString *)jsonStr{
@@ -96,432 +100,278 @@
 
 #pragma mark - initialization
 - (void)initEasemob:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *appKey = stringArg(info[@"appKey"]);
+    
+    EMOptions *options = [EMOptions optionsWithAppkey:appKey];
+    
+    options.apnsCertName = stringArg(info[@"apnsCertName"]);
+    options.enableConsoleLog = numberArg(info[@"debug"]).boolValue;
+    options.isAutoLogin = (numberArg(info[@"isAutoLoginEnabled"]).integerValue != 2);
+    options.isAutoAcceptGroupInvitation = (numberArg(info[@"isAutoAcceptGroupInvitation"]).integerValue != 2);
+    
+    EMError *error = [self.mgr initializeEasemobWithOptions:options];
+    if (error) {
+        UEX_LOG_ERROR(error);
     }
-    id initInfo = [self getDataFromJSON:inArguments[0]];
-    if([initInfo objectForKey:@"isAutoLoginEnabled"]){
-        id autoLogin = [initInfo objectForKey:@"isAutoLoginEnabled"];
-        if([autoLogin integerValue] == 1 ){
-            _mgr.isAutoLoginEnabled = YES;
-        }else if([autoLogin integerValue] == 2 ){
-            _mgr.isAutoLoginEnabled = NO;
-        }
-    }
-    [_mgr initEasemobWithAppKey:[initInfo objectForKey:@"appKey"] apnsCertName:[initInfo objectForKey:@"apnsCertName"] withInfo:initInfo];
+
 }
 
 
 
-//- (void)login:(NSMutableArray *)inArguments{
-//    id user = [self getDataFromJSON:inArguments[0]];
-//    
-//    // 登录
-//    
-//    [self.sharedInstance.chatManager asyncLoginWithUsername:[user objectForKey:@"username"] password:[user objectForKey:@"password"] completion:^(NSDictionary *loginInfo, EMError *error) {
-//        //Block回调
-//        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
-//        
-//        
-//        if (!error && loginInfo) {
-//            [dict setValue:@"1" forKey:@"result"];
-//            [dict setValue:@"登录成功" forKey:@"msg"];
-//            [self getAPNsOptions];
-//            [_sharedInstance.chatManager importDataToNewDatabase];
-//            [_sharedInstance.chatManager loadDataFromDatabase];
-//            [self callBackJSONWithFunction:@"onConnected" parameter:nil];
-//        }else{
-//            [dict setValue:@"2" forKey:@"result"];
-//            [dict setValue:[NSString stringWithFormat:@"登录失败:%@",error.description] forKey:@"msg"];
-//            
-//        }
-//        [self callBackJSONWithFunction:@"cbLogin" parameter:dict];
-//    } onQueue:nil];
-//}
 - (void)login:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id user = [self getDataFromJSON:inArguments[0]];
+    
 
-    // 登录
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=[self.sharedInstance loginWithUsername:[user objectForKey:@"username"] password:[user objectForKey:@"password"]];
-        //Block回调
-        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
-        
-        
-        if (!error) {
-            [dict setValue:@"1" forKey:@"result"];
-            [dict setValue:@"登录成功" forKey:@"msg"];
-            //[self getAPNsOptions];
-            [_sharedInstance dataMigrationTo3];
-            [self callBackJSONWithFunction:@"onConnected" parameter:nil];
+        ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        NSString *password = stringArg(info[@"password"]);
+        EMError *error = [self.sharedClient loginWithUsername:username password:password];
+        NSDictionary *dict = [NSMutableDictionary dictionary];
+
+        if (error) {
+            [dict setValue:@2 forKey:@"result"];
+            [dict setValue:[NSString stringWithFormat:@"登录失败<%d>: %@",error.code,error.errorDescription] forKey:@"msg"];
+            UEX_LOG_ERROR(error);
         }else{
-            [dict setValue:@"2" forKey:@"result"];
-            [dict setValue:[NSString stringWithFormat:@"登录失败:%@%d",error.errorDescription,error.code] forKey:@"msg"];
-            
+            [dict setValue:@1 forKey:@"result"];
+            [dict setValue:@"登录成功" forKey:@"msg"];
         }
-        [self callBackJSONWithFunction:@"cbLogin" parameter:dict];
+        [self callbackWithFunctionName:@"cbLogin" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
+
     });
 }
 
-//- (void)getAPNsOptions{
-//    EMPushOptions *tmp = [self.sharedInstance pushOptions];
-//    EMPushOptions *options = [[EMPushOptions alloc]init];
-//    options.nickname = tmp.nickname;
-//    options.displayStyle = tmp.displayStyle;
-//    options.noDisturbingEndH = tmp.noDisturbingEndH;
-//    options.noDisturbingStartH = tmp.noDisturbingStartH;
-//    options.noDisturbStatus = tmp.noDisturbStatus;
-////    options.backupDataSize = tmp.backupDataSize;
-////    options.backupPaths = tmp.backupPaths;
-////    options.backupTimeInterval = tmp.backupTimeInterval;
-////    options.backupType = tmp.backupType;
-////    options.backupVersion = tmp.backupVersion;
-//    _mgr.apnsOptions = options;
-//
-//}
+
 
  - (void)logout:(NSMutableArray *)inArguments{
-     
+     ACArgsUnpack(ACJSFunctionRef *cb) = inArguments;
      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-         EMError *error=[self.sharedInstance logout:YES];
-         
-         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
+         EMError *error = [self.sharedClient logout:YES];
+         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+         UEX_ERROR err = kUexNoError;
          if (!error) {
-             [dict setValue:@"1" forKey:@"result"];
+             [dict setValue:@1 forKey:@"result"];
              [dict setValue:@"登出成功" forKey:@"message"];
          }else{
-             [dict setValue:@"2" forKey:@"result"];
-             [dict setValue:@"登出失败" forKey:@"message"];;
+             [dict setValue:@2 forKey:@"result"];
+             err = uexErrorMake(error.code,error.errorDescription);
+             [dict setValue:[NSString stringWithFormat:@"登出失败<%d>: %@",error.code,error.errorDescription] forKey:@"msg"];
          }
-         [self callBackJSONWithFunction:@"cbLogout" parameter:dict];
+         [self callbackWithFunctionName:@"cbLogin" obj:dict];
+         [cb executeWithArguments:ACArgsPack(err)];
+
      });
 }
 
 - (void)registerUser:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id user = [self getDataFromJSON:inArguments[0]];
-    if(!user){
-        return;
-    }
-    
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=[self.sharedInstance registerWithUsername:[user objectForKey:@"username"]
-                                                        password:[user objectForKey:@"password"]];
-        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
+        NSString *userName = stringArg(info[@"username"]);
+        NSString *password = stringArg(info[@"password"]);
+        EMError *error = [self.sharedClient registerWithUsername:userName password:password];
+        UEX_ERROR err = kUexNoError;
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         if (!error) {
-            [dict setValue:@"1" forKey:@"result"];
+            [dict setValue:@1 forKey:@"result"];
             [dict setValue:@"注册成功" forKey:@"msg"];
         }else{
-            [dict setValue:@"2" forKey:@"result"];
-            [dict setValue:[NSString stringWithFormat:@"注册失败:%@%d",error.errorDescription,error.code] forKey:@"msg"];
+            err = uexErrorMake(error.code,error.errorDescription);
+            [dict setValue:@2 forKey:@"result"];
+            [dict setValue:[NSString stringWithFormat:@"注册失败<%d>:%@",error.code,error.errorDescription] forKey:@"msg"];
         }
-        
-        [self callBackJSONWithFunction:@"cbRegisterUser" parameter:dict];
+        [self callbackWithFunctionName:@"cbRegisterUser" obj:dict];
+        [cb executeWithArguments:ACArgsPack(err)];
     });
     
 }
 
 
 - (void)updateCurrentUserNickname:(NSMutableArray *)inArguments{
-    id nickname = [self getDataFromJSON:inArguments[0]];
-    
+    ACArgsUnpack(NSDictionary *info) = inArguments;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        
-        [self.sharedInstance setApnsNickname:[nickname objectForKey:@"nickname"]];
+        [self.sharedClient setApnsNickname:stringArg(info[@"nickname"])];
     });
     
 }
 
 
 - (void)getLoginInfo:(NSMutableArray *)inArguments{
-    
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
-    
-    [dict setValue:(self.sharedInstance.isConnected?@"1":@"2")   forKey:@"isConnected"];
-    [dict setValue:(self.sharedInstance.isLoggedIn?@"1":@"2")  forKey:@"isLoggedIn"];
-    [dict setValue:(self.sharedInstance.isAutoLogin?@"1":@"2")  forKey:@"isAutoLoginEnabled"];
-    if(self.sharedInstance.isLoggedIn){
-        
+    ACArgsUnpack(ACJSFunctionRef *cb) = inArguments;
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:(self.sharedClient.isConnected ? @1 : @2)   forKey:@"isConnected"];
+    [dict setValue:(self.sharedClient.isLoggedIn ? @1 : @2)  forKey:@"isLoggedIn"];
+    [dict setValue:(self.sharedClient.isAutoLogin ? @1 : @2)  forKey:@"isAutoLoginEnabled"];
+    if(self.sharedClient.isLoggedIn){
         NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
-        [userInfo setValue:@(self.sharedInstance.isConnected)   forKey:@"isConnected"];
-        [userInfo setValue:@(self.sharedInstance.isLoggedIn)  forKey:@"isLoggedIn"];
-        [userInfo setValue:@(self.sharedInstance.isAutoLogin)  forKey:@"isAutoLoginEnabled"];
-        if ([self.sharedInstance.pushOptions.nickname length]>0){
-            [userInfo setValue:self.sharedInstance.pushOptions.nickname  forKey:@"nickname"];
-        }
-        
+        [userInfo setValue:@(self.sharedClient.isConnected)   forKey:@"isConnected"];
+        [userInfo setValue:@(self.sharedClient.isLoggedIn)  forKey:@"isLoggedIn"];
+        [userInfo setValue:@(self.sharedClient.isAutoLogin)  forKey:@"isAutoLoginEnabled"];
+        [userInfo setValue:self.sharedClient.pushOptions.nickname  forKey:@"nickname"];
         [dict setValue:userInfo  forKey:@"userInfo"];
     }
-    [self callBackJSONWithFunction:@"cbGetLoginInfo" parameter:dict];
-    
+    [self callbackWithFunctionName:@"cbGetLoginInfo" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
 }
 
 
-
--(EMChatType)getMsgType:(id)info{
-    EMChatType type = EMChatTypeChat;
-    if([[info objectForKey:@"chatType"] integerValue] == 1){
-        type = EMChatTypeGroupChat;
-    }
-    else if([[info objectForKey:@"chatType"] integerValue] == 2){
-        type = EMChatTypeChatRoom;
-    }
-    
-    return type;
-}
 
 
 
 
 #pragma mark - Message
 
--(void)sendMsgWithResult:(EMMessage *)message error:(EMError *)error{
+- (void)handleMessageSent:(EMMessage *)message error:(EMError *)error{
     
-    NSMutableDictionary *result=[NSMutableDictionary dictionary];
-    if(error){
-        [result setValue:@(NO) forKey:@"isSuccess"];
-        [result setValue:error.errorDescription forKey:@"errorStr"];
-        [result setValue:@"" forKey:@"message"];
-    }
-    else{
-        [result setValue:@(YES) forKey:@"isSuccess"];
-        [result setValue:error.errorDescription forKey:@"errorStr"];
-        [result setValue:[self.mgr analyzeEMMessage:message] forKey:@"message"];
-    }
-    [self callBackJSONWithFunction:@"onMessageSent" parameter:result];
-}
-- (void)sendText:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
-    EMTextMessageBody *msgBody = [[EMTextMessageBody alloc] initWithText:[info objectForKey:@"content"]];
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
 
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
+}
+
+- (void)sendMessageWithBody:(EMMessageBody *)body
+                   chatType:(EMChatType)chatType
+                        ext:(NSDictionary *)ext
+                         to:(NSString *)conversationID{
+    EMMessage *message = [[EMMessage alloc]initWithConversationID:conversationID from:[self.sharedClient currentUsername] to:conversationID body:body ext:ext];
+    
+    [self.sharedClient.chatManager asyncSendMessage:message
+                                           progress:nil
+                                         completion:^(EMMessage *message, EMError *error) {
+                                             NSMutableDictionary *result=[NSMutableDictionary dictionary];
+                                             if(error){
+                                                 [result setValue:UEX_FALSE forKey:@"isSuccess"];
+                                                 [result setValue:error.errorDescription forKey:@"errorStr"];
+                                             }
+                                             else{
+                                                 [result setValue:UEX_TRUE forKey:@"isSuccess"];
+                                             }
+                                             [result setValue:[self.mgr analyzeEMMessage:message] forKey:@"message"];
+                                             [self callbackWithFunctionName:@"onMessageSent" obj:result];
+                                         }];
+}
+
+
+
+
+static NSDictionary * getMessageExt(NSDictionary *info){
+    NSString *ext = stringArg(info[@"ext"]);
+    NSDictionary *extObj = dictionaryArg(info[@"extObj"]);
+    if(!extObj && ext){
+        extObj = @{@"ext":ext};
+    }
+    return extObj;
+
+}
+
+
+
+
+static EMChatType getMessageType(NSDictionary *info){
+    
+    EMChatType type = EMChatTypeChat;
+    
+    
+    NSInteger inChatType = [info[@"chatType"] integerValue];
+    
+    if(inChatType == 1){
+        type = EMChatTypeGroupChat;
+    }
+    if(inChatType == 2){
+        type = EMChatTypeChatRoom;
+    }
+
+    return type;
+}
         
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
+        
+
+        
+
+
+        
+
+
+- (void)sendText:(NSMutableArray *)inArguments{
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSString *content = stringArg(info[@"content"]);
+    EMTextMessageBody *msgBody = [[EMTextMessageBody alloc] initWithText:content];
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
+
     
 }
 
 - (void)sendVoice:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
-    EMVoiceMessageBody *msgBody = [[EMVoiceMessageBody alloc] initWithLocalPath:[self absPath:[info objectForKey:@"filePath"]] displayName:[info objectForKey:@"displayName"]];
-    if([info objectForKey:@"length"]){
-        msgBody.duration = [[info objectForKey:@"length"] intValue];
-    }
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSString *filePath = stringArg(info[@"filePath"]);
+    NSString *displayName = stringArg(info[@"displayName"]);
+    NSNumber *length = numberArg(info[@"length"]);
+    EMVoiceMessageBody *msgBody = [[EMVoiceMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
+    msgBody.duration = length.intValue;
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
 
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
-        
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
     
 }
 
 - (void)sendPicture:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
-    
-    EMImageMessageBody *msgBody = [[EMImageMessageBody alloc] initWithLocalPath:[self absPath:[info objectForKey:@"filePath"]] displayName:[info objectForKey:@"displayName"]];
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
-    
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
-        
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
-    
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSString *filePath = stringArg(info[@"filePath"]);
+    NSString *displayName = stringArg(info[@"displayName"]);
+    EMImageMessageBody *msgBody = [[EMImageMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
+
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
+
 }
 
 - (void)sendLocationMsg:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSNumber *lat = numberArg(info[@"latitude"]);
+    NSNumber *lon = numberArg(info[@"longitude"]);
+    NSString *address = stringArg(info[@"locationAddress"]);
 
-    EMLocationMessageBody *msgBody = [[EMLocationMessageBody alloc] initWithLatitude:[[info objectForKey:@"latitude"] doubleValue] longitude:[[info objectForKey:@"longitude"] doubleValue] address:[info objectForKey:@"locationAddress"]];
-    
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
-    
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
-        
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
-    
+    EMLocationMessageBody *msgBody = [[EMLocationMessageBody alloc] initWithLatitude:lat.doubleValue longitude:lon.doubleValue address:address];
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
 }
 
-- (void)sendVideo:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
-    
-    EMVideoMessageBody *msgBody = [[EMVideoMessageBody alloc]  initWithLocalPath:[self absPath:[info objectForKey:@"filePath"]] displayName:[info objectForKey:@"displayName"]];
-    if([info objectForKey:@"length"]){
-        msgBody.duration = [[info objectForKey:@"length"] intValue];
-    }
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
-    
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
         
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
+- (void)sendVideo:(NSMutableArray *)inArguments{
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSString *filePath = stringArg(info[@"filePath"]);
+    NSString *displayName = stringArg(info[@"displayName"]);
+    NSNumber *length = numberArg(info[@"length"]);
+    EMVideoMessageBody *msgBody = [[EMVideoMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
+    msgBody.duration = length.intValue;
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
+
 }
 
 - (void)sendFile:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
     
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
     
-    EMFileMessageBody *msgBody = [[EMFileMessageBody alloc] initWithLocalPath:[self absPath:[info objectForKey:@"filePath"]] displayName:[info objectForKey:@"displayName"]];
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"username"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"username"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
-    
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
-        
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
-
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"username"]);
+    NSString *filePath = stringArg(info[@"filePath"]);
+    NSString *displayName = stringArg(info[@"displayName"]);
+    EMFileMessageBody *msgBody = [[EMFileMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
 }
+        
 - (void)sendCmdMessage:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *username = stringArg(info[@"toUsername"]);
+    NSString *action = stringArg(info[@"action"]);
     
-    NSDictionary *extDic=nil;
-    if([info objectForKey:@"ext"]){
-        extDic=@{@"ext":[info objectForKey:@"ext"]};
-    }
-    if([info objectForKey:@"extObj"]){
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSString class]]){
-            extDic=[[info objectForKey:@"extObj"] JSONValue];
-        }
-        if([[info objectForKey:@"extObj"] isKindOfClass:[NSDictionary class]]){
-            extDic=[info objectForKey:@"extObj"];
-        }
-    }
+    EMCmdMessageBody *msgBody = [[EMCmdMessageBody alloc] initWithAction:action];
     
-    EMCmdMessageBody *msgBody = [[EMCmdMessageBody alloc] initWithAction:[info objectForKey:@"action"]];
-    // 生成message
-    EMMessage *msg = [[EMMessage alloc] initWithConversationID:[info objectForKey:@"toUsername"] from:[[EMClient sharedClient] currentUsername] to:[info objectForKey:@"toUsername"] body:msgBody ext:extDic];
-    msg.chatType = [self getMsgType:info];
-    
-    [self.sharedInstance.chatManager asyncSendMessage:msg progress:^(int progress) {
-        
-    } completion:^(EMMessage *message, EMError *error) {
-        [self sendMsgWithResult:message error:error];
-    }];
+    [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
     
 }
 
+        
 - (void)setNotifyBySoundAndVibrate:(NSMutableArray *)inArguments {
     if(inArguments.count<1){
         return;
@@ -529,25 +379,25 @@
     id notifyInfo = [self getDataFromJSON:inArguments[0]];
     
     if ([[notifyInfo objectForKey:@"enable"] integerValue] == 0){
-        _mgr.messageNotification = NO;
+        self.mgr.messageNotification = NO;
     }else if([[notifyInfo objectForKey:@"enable"] integerValue] == 1){
-        _mgr.messageNotification = YES;
+        self.mgr.messageNotification = YES;
     }
     
     if ([[notifyInfo objectForKey:@"soundEnable"] integerValue] == 0){
-        _mgr.isPlaySound = NO;
+        self.mgr.isPlaySound = NO;
     }else if([[notifyInfo objectForKey:@"soundEnable"] integerValue] == 1){
-        _mgr.isPlaySound = YES;
+        self.mgr.isPlaySound = YES;
     }
     if ([[notifyInfo objectForKey:@"vibrateEnable"] integerValue] == 0){
-        _mgr.isPlayVibration = NO;
+        self.mgr.isPlayVibration = NO;
     }else if([[notifyInfo objectForKey:@"vibrateEnable"] integerValue] == 1){
-        _mgr.isPlayVibration = YES;
+        self.mgr.isPlayVibration = YES;
     }
     if ([[notifyInfo objectForKey:@"showNotificationInBackgroud"] integerValue] == 0){
-        _mgr.isShowNotificationInBackgroud = NO;
+        self.mgr.isShowNotificationInBackgroud = NO;
     }else if([[notifyInfo objectForKey:@"showNotificationInBackgroud"] integerValue] == 1){
-        _mgr.isShowNotificationInBackgroud = YES;
+        self.mgr.isShowNotificationInBackgroud = YES;
     }
 
     if ([[notifyInfo objectForKey:@"deliveryNotification"] integerValue] == 0){
@@ -559,26 +409,28 @@
 }
 
 
+        
 
--(EMMessage *)getMessage:(NSString *)msgId{
+- (EMMessage *)getMessage:(NSString *)msgId{
+    if(!msgId){
+        return nil;
+    }
     
-    //不需要从本来的会话里面去；
-    EMConversation *conversation = [self.sharedInstance.chatManager getConversation:@"appcan" type:EMConversationTypeChat createIfNotExist:YES];
+    //不需要从本来的会话里面去取
+    EMConversation *conversation = [self.sharedClient.chatManager getConversation:@"appcan" type:EMConversationTypeChat createIfNotExist:YES];
     EMMessage *message = [conversation loadMessageWithId:msgId];
     return message;
 }
 
+        
 
 - (void)getMessageById:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    if ([info objectForKey:@"msgId"]){
-        EMMessage *msg = [self getMessage:[info objectForKey:@"msgId"]];
-        NSDictionary *messageDict = [_mgr analyzeEMMessage:msg];
-        [self callBackJSONWithFunction:@"cbGetMessageById" parameter:messageDict];
-    }
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+    NSString *msgId = stringArg(info[@"msgId"]);
+    EMMessage *msg = [self getMessage:msgId];
+    NSDictionary *dict = [self.mgr analyzeEMMessage:msg];
+    [self callbackWithFunctionName:@"cbGetMessageById" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
     
 }
 
@@ -587,83 +439,74 @@
 
 
 - (void)sendHasReadResponseForMessage:(NSMutableArray *)inArguments{
-    
-    
-    id info = [self getDataFromJSON:inArguments[0]];
-    if ([info objectForKey:@"msgId"]){
-        EMMessage *msg = [self getMessage:[info objectForKey:@"msgId"]];
-        [_sharedInstance.chatManager asyncSendReadAckForMessage:msg];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *msgId = stringArg(info[@"msgId"]);
+    EMMessage *msg = [self getMessage:msgId];
+    if(msg){
+        [self.sharedClient.chatManager asyncSendReadAckForMessage:msg];
+        
     }
-    
+
 }
+        
+        
+        
 
 #pragma mark - Conversation
 
--(EMConversationType)parseConversationType:(NSDictionary *)dataDict{
+static EMConversationType getConversationType(NSDictionary *info){
     EMConversationType type = EMConversationTypeChat;
-    if([[dataDict objectForKey:@"chatType"] integerValue] == 2 ){
+    NSInteger chatType = numberArg(info[@"chatType"]).integerValue;
+    NSInteger isGroup = numberArg(info[@"isGroup"]).integerValue;
+    if(chatType == 2 ){
         type = EMConversationTypeChatRoom;
-    }else if([[dataDict objectForKey:@"chatType"] integerValue] == 0 ){
+    }else if(chatType == 0 ){
         type = EMConversationTypeChat;
-    }else if([[dataDict objectForKey:@"isGroup"] integerValue] == 1 ||[[dataDict objectForKey:@"chatType"] integerValue] == 1){
+    }else if(isGroup == 1 ||chatType == 1){
         type = EMConversationTypeGroupChat;
     }
     return type;
-    
 }
 
--(EMConversation *) getConversation:(NSMutableArray *)inArguments{
-    id conversationData = [self getDataFromJSON:inArguments[0]];
-    if (conversationData){
-        EMConversation *conversation = [self.sharedInstance.chatManager getConversation:[conversationData objectForKey:@"username"] type:[self parseConversationType:conversationData] createIfNotExist:YES];
+static EMConversation * getConversation(NSDictionary *info){
+    return [[uexEasemobManager sharedManager].SDK.chatManager getConversation:stringArg(info[@"username"])
+                                                                         type:getConversationType(info)
+                                                             createIfNotExist:NO];
+
+}
         
-        return conversation;
-    }
-    else {
-        return nil;
-    }
-    
-}
+
+
 - (void)getConversationByName:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    EMConversation *conversation = [self getConversation:inArguments];
-    [self cbGetConversationByName:conversation];
-}
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
 
+    NSDictionary *dict = [self.mgr analyzeEMConversation:getConversation(info)];
+    [self callbackWithFunctionName:@"cbGetConversationByName" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
 
-- (void)cbGetConversationByName:(EMConversation *)conversation{
-    
-    NSDictionary *dict = [_mgr analyzeEMConversation:conversation];
-    
-    [self callBackJSONWithFunction:@"cbGetConversationByName" parameter:dict];
-    
 }
 
 
 - (void)getMessageHistory:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    NSString *username = [info objectForKey:@"username"];
-    if(!username) return;
-    EMConversation *conversation = [self getConversation:inArguments];
-    if(!conversation) return;
-    NSString *startMsgId = [info objectForKey:@"startMsgId"];
-    NSMutableArray *msgList = [NSMutableArray array];
-    NSArray *messages;
-    int pagesize = 0;
-    if([info objectForKey:@"pagesize"]){
-        pagesize = [[info objectForKey:@"pagesize"] intValue];
-    }
     
-    messages = [conversation loadMoreMessagesFromId:startMsgId limit:pagesize direction:EMMessageSearchDirectionUp];
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+    EMConversation *conversation = getConversation(info);
+    
+    NSString *startMsgId = stringArg(info[@"startMsgId"]);
+    NSNumber *inPageSize = numberArg(info[@"pagesize"]);
+    NSMutableArray *msgList = [NSMutableArray array];
+    int pagesize = inPageSize ? inPageSize.intValue : 20;
+
+    NSArray *messages = [conversation loadMoreMessagesFromId:startMsgId limit:pagesize direction:EMMessageSearchDirectionUp];
     for(EMMessage *msg in messages){
-        [msgList addObject:[_mgr analyzeEMMessage:msg]];
+        NSDictionary *msgDict = [self.mgr analyzeEMMessage:msg];
+        if (msgDict) {
+            [msgList addObject:msgDict];
+        }
     }
-    [self callBackJSONWithFunction:@"cbGetMessageHistory" parameter:@{@"messages":msgList}];
+    NSDictionary *dict = @{@"messages":msgList};
+    [self callbackWithFunctionName:@"cbGetMessageHistory" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
 }
 
 
@@ -687,15 +530,12 @@
  */
 
 - (void)getUnreadMsgCount:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    EMConversation *conversation = [self getConversation:inArguments];
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+    EMConversation *conversation = getConversation(info);
     NSUInteger unreadMessageCount = [conversation unreadMessagesCount];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:1];
-    [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)unreadMessageCount] forKey:@"count"];
-    
-    [self callBackJSONWithFunction:@"cbGetUnreadMsgCount" parameter:dict];
+    NSDictionary *dict = @{@"count": @(unreadMessageCount)};
+    [self callbackWithFunctionName:@"cbGetUnreadMsgCount" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
     
 }
 
@@ -708,10 +548,8 @@
  }
  */
 - (void)resetUnreadMsgCount:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    EMConversation *conversation = [self getConversation:inArguments];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    EMConversation *conversation = getConversation(info);
     [conversation markAllMessagesAsRead];
 }
 
@@ -744,10 +582,8 @@
  }
   */
 - (void)deleteConversation:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    EMConversation *conversation = [self getConversation:inArguments];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    EMConversation *conversation = getConversation(info);
     [conversation deleteAllMessages];
 }
 /*
@@ -760,21 +596,16 @@
  }
  */
 - (void)removeMessage:(NSMutableArray*)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id conversationData = [self getDataFromJSON:inArguments[0]];
-
-    EMConversation *conversation = [self getConversation:inArguments];
-    [conversation deleteMessageWithId:[conversationData objectForKey:@"msgId"]];
-    
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+    NSString *msgId = stringArg(info[@"msgId"]);
+    EMConversation *conversation = getConversation(info);
+    [conversation deleteMessageWithId:msgId];
 }
 /*
  #####[3.14]deleteAllConversation();//删除所有会话记录(包括本地)
  */
 - (void)deleteAllConversation:(NSMutableArray*)array{
-    [self.sharedInstance.chatManager deleteConversations:[self.sharedInstance.chatManager getAllConversations] deleteMessages:YES];
-   // NSLog(@"deleteAllConversation");
+    [self.sharedClient.chatManager deleteConversations:[self.sharedClient.chatManager getAllConversations] deleteMessages:YES];
 }
 /*
 ##### [3.15]getChatterInfo();//获取聊天对象信息
@@ -793,41 +624,38 @@ var chatterInfo = {
 
 - (void)getChatterInfo:(NSMutableArray *)inArguments{
     
+    ACJSFunctionRef *cb = JSFunctionArg(inArguments.lastObject);
+    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        __block NSMutableArray *result = [NSMutableArray array];
+        @onExit{
+            [self callbackWithFunctionName:@"cbGetChatterInfo" obj:result];
+            [cb executeWithArguments:ACArgsPack(result)];
+        };
+        
+        
+        
         NSMutableArray *usernamelist = [NSMutableArray array];
         EMError *error = nil;
-        NSArray *buddyList = [self.sharedInstance.contactManager getContactsFromServerWithError:&error];
-        
+        NSArray *buddyList = [self.sharedClient.contactManager getContactsFromServerWithError:&error];
         if (!error) {
             for(NSString  *username in buddyList){
                 [usernamelist addObject:username];
             }
-            
-            
-        }else{
-            return;
         }
-        
-        error = nil;
+
         NSMutableArray *grouplist = [NSMutableArray array];
-        NSArray *groups = [self.sharedInstance.groupManager getMyGroupsFromServerWithError:&error];
+        NSArray *groups = [self.sharedClient.groupManager getMyGroupsFromServerWithError:&error];
         if (!error) {
-            
             for (EMGroup  *group in groups){
                 [grouplist addObject:group];
             }
-            
-        }else{
-            return;
         }
-        
-        
-        NSMutableArray *result = [NSMutableArray array];
         for(NSString *username in usernamelist){
             NSMutableDictionary *chatter = [NSMutableDictionary dictionary];
-            EMConversation *conversation = [self.sharedInstance.chatManager getConversation:username type:EMConversationTypeChat createIfNotExist:YES];
-            [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
-            [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+            EMConversation *conversation = [self.sharedClient.chatManager getConversation:username type:EMConversationTypeChat createIfNotExist:YES];
+            [chatter setValue:[self.mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+            [chatter setValue:@(conversation.unreadMessagesCount) forKey:@"unreadMsgCount"];
             [chatter setValue:username forKey:@"chatter"];
             [chatter setValue:cEMChatTypeUser forKey:@"isGroup"];
             [chatter setValue:cEMChatTypeUser forKey:@"chatType"];
@@ -835,9 +663,9 @@ var chatterInfo = {
         }
         for(EMGroup *group in grouplist){
             NSMutableDictionary *chatter = [NSMutableDictionary dictionary];
-            EMConversation *conversation = [self.sharedInstance.chatManager getConversation:group.groupId type:EMConversationTypeGroupChat createIfNotExist:YES];
-            [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
-            [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
+            EMConversation *conversation = [self.sharedClient.chatManager getConversation:group.groupId type:EMConversationTypeGroupChat createIfNotExist:YES];
+            [chatter setValue:[self.mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+            [chatter setValue:@(conversation.unreadMessagesCount) forKey:@"unreadMsgCount"];
             [chatter setValue:group.groupId forKey:@"chatter"];
             [chatter setValue:group.subject forKey:@"groupName"];
             [chatter setValue:cEMChatTypeGroup forKey:@"isGroup"];
@@ -845,42 +673,51 @@ var chatterInfo = {
             [result addObject:chatter];
         }
         
-        [self callBackJSONWithFunction:@"cbGetChatterInfo" parameter:result];
+       
     });
 }
 
 
 - (void)getRecentChatters:(NSMutableArray *)inArguments{
+    ACJSFunctionRef *cb = JSFunctionArg(inArguments.lastObject);
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        NSArray *conversationArray = [_sharedInstance.chatManager loadAllConversationsFromDB];
-        NSMutableArray *tmp = [NSMutableArray array];
+        __block NSMutableArray *result = [NSMutableArray array];
+        @onExit{
+            [self callbackWithFunctionName:@"cbGetRecentChatters" obj:result];
+            [cb executeWithArguments:ACArgsPack(result)];
+        };
+        
+        
+        
+        NSArray *conversationArray = [self.sharedClient.chatManager loadAllConversationsFromDB];
+
         for(EMConversation *conversation in conversationArray){
-            
+            if (!conversation.conversationId || conversation.conversationId.length == 0) {
+                continue;
+            }
             NSMutableDictionary *chatter = [NSMutableDictionary dictionary];
-            
             switch (conversation.type) {
-                    
                 case EMConversationTypeChat:{
-                    [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+                    [chatter setValue:[self.mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
                     [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
                     [chatter setValue:conversation.conversationId forKey:@"chatter"];
                     [chatter setValue:cEMChatTypeUser forKey:@"isGroup"];
                     [chatter setValue:cEMChatTypeUser forKey:@"chatType"];
-                    [tmp addObject:chatter];
+                    [result addObject:chatter];
                 }
                     break;
                 case EMConversationTypeGroupChat:{
-                    [chatter setValue:[_mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
+                    [chatter setValue:[self.mgr analyzeEMMessage:[conversation latestMessage]]  forKey:@"lastMsg"];
                     [chatter setValue:[NSString stringWithFormat:@"%ld",(unsigned long)conversation.unreadMessagesCount] forKey:@"unreadMsgCount"];
                     [chatter setValue:conversation.conversationId forKey:@"chatter"];
                     EMError *error = nil;
-                    EMGroup *group = [_sharedInstance.groupManager searchPublicGroupWithId:conversation.conversationId error:&error];
+                    EMGroup *group = [self.sharedClient.groupManager searchPublicGroupWithId:conversation.conversationId error:&error];
                     if(!error)[chatter setValue:group.subject forKey:@"groupName"];
                     
                     [chatter setValue:cEMChatTypeGroup forKey:@"isGroup"];
                     [chatter setValue:cEMChatTypeGroup forKey:@"chatType"];
-                    [tmp addObject:chatter];
+                    [result addObject:chatter];
                 }
                     break;
                 case EMConversationTypeChatRoom:
@@ -888,51 +725,32 @@ var chatterInfo = {
                     break;
             }
         }
-        NSMutableArray *result = [NSMutableArray array];
-        for(NSDictionary *dict in tmp){
-            if([result count] == 0){
-                [result addObject:dict];
-            }else{
-                NSInteger cTime = [self getTimeStampInChatterInfo:dict];
-                BOOL isInsert = NO;
-                for(int i = 0;i<[result count];i++){
-                    NSDictionary *cpDict = result[i];
-                    if(cTime>[self getTimeStampInChatterInfo:cpDict]){
-                        [result insertObject:dict atIndex:i];
-                        isInsert = YES;
-                        break;
-                    }
-                }
-                if(!isInsert)[result addObject:dict];
-            }
-        }
-        [self callBackJSONWithFunction:@"cbGetRecentChatters" parameter:result];
-        
-
+        [result sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+            NSNumber *(^getTimestamp)(NSDictionary *obj) = ^(NSDictionary *obj){
+                NSDictionary *lastMsg = dictionaryArg(obj[@"lastMsg"]);
+                NSNumber *ts = numberArg(lastMsg[@"messageTime"]);
+                return ts?:@(-1);
+            };
+            return [getTimestamp(obj1) compare:getTimestamp(obj2)];
+        }];
     });
     
 }
 
 
--(NSInteger)getTimeStampInChatterInfo:(NSDictionary*)dict{
-    if([dict objectForKey:@"lastMsg"]&&[[dict objectForKey:@"lastMsg"] isKindOfClass:[NSDictionary class]]){
-        NSDictionary *msg = [dict objectForKey:@"lastMsg"];
-        if([msg objectForKey:@"messageTime"]){
-            return [[msg objectForKey:@"messageTime"] integerValue];
-        }
-    }
-    return -1;
-}
+
 
 - (void)getTotalUnreadMsgCount:(NSMutableArray *)inArguments{
+    ACArgsUnpack(ACJSFunctionRef *cb) = inArguments;
     NSInteger count = 0;
-    
-    NSArray *convs=[self.sharedInstance.chatManager getAllConversations];
-    for (EMConversation *conv in convs) {
-        count=count+conv.unreadMessagesCount;
+    NSArray *allConversations = [self.sharedClient.chatManager getAllConversations];
+    for (EMConversation *conversation in allConversations) {
+        count += conversation.unreadMessagesCount;
     }
-    NSDictionary *result = [NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"%ld",(long)count] forKey:@"count"];
-    [self callBackJSONWithFunction:@"cbGetTotalUnreadMsgCount" parameter:result];
+    NSDictionary *dict = @{@"count": @(count)};
+    [self callbackWithFunctionName:@"cbGetTotalUnreadMsgCount" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
+
     
 }
  /*
@@ -986,19 +804,21 @@ var chatterInfo = {
 	
  }
 */
-- (void)getContactUserNames:(NSMutableArray*)array{
+- (void)getContactUserNames:(NSMutableArray*)inArguments{
+    
+   
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+         ACArgsUnpack(ACJSFunctionRef *cb) = inArguments;
         EMError *error;
-        NSMutableArray *usernames = [NSMutableArray arrayWithCapacity:1];
-        NSArray *users=[self.sharedInstance.contactManager getContactsFromServerWithError:&error];
-        if (!error) {
-            for( NSString *buddy in users){
-                [usernames addObject:buddy];
-            }
-            [self callBackJSONWithFunction:@"cbGetContactUserNames" parameter:usernames];
-            
+        UEX_ERROR err = kUexNoError;
+        NSArray *users = [self.sharedClient.contactManager getContactsFromServerWithError:&error];
+        if (error) {
+            err = uexErrorMake(error.code,error.errorDescription);
         }
+        
+        [self callbackWithFunctionName:@"cbGetContactUserNames" obj:users];
+        [cb executeWithArguments:ACArgsPack(err,users)];
     });
     
 }
@@ -1017,16 +837,17 @@ var chatterInfo = {
  }
  */
 - (void)addContact:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
+    
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager addContact:[contactInfo objectForKey:@"toAddUsername"] message:[contactInfo objectForKey:@"reason"]];
-        if (!error) {
-            //NSLog(@"添加成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"toAddUsername"]);
+        NSString *msg = stringArg(info[@"reason"]);
+        EMError *error = [self.sharedClient.contactManager addContact:username message:msg];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
+        
     });
 }
 /*
@@ -1037,87 +858,77 @@ var chatterInfo = {
  }
  */
 - (void)deleteContact:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
+    
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager deleteContact:[contactInfo objectForKey:@"username"]];
-        if (!error) {
-            //NSLog(@"删除成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.contactManager deleteContact:username];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
 
 - (void)acceptInvitation:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager acceptInvitationForUsername:[contactInfo objectForKey:@"username"]];
-        if (!error) {
-            //NSLog(@"发送同意成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.contactManager acceptInvitationForUsername:username];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
 
 - (void)refuseInvitation:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
-    
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager declineInvitationForUsername:[contactInfo objectForKey:@"username"]];
-        if (!error) {
-            // NSLog(@"发送拒绝成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.contactManager declineInvitationForUsername:username];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
 
 - (void)getBlackListUsernames:(NSMutableArray *)inArguments{
+    ACArgsUnpack(ACJSFunctionRef *cb) = inArguments;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         EMError *error;
-        NSArray * BlockedList = [self.sharedInstance.contactManager getBlackListFromServerWithError:&error];
-        
-        [self cbGetBlackListUsernames:BlockedList];
+        NSArray *blockedList = [self.sharedClient.contactManager getBlackListFromServerWithError:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
+        [self callbackWithFunctionName:@"cbGetBlackListUsernames" obj:blockedList];
+        [cb executeWithArguments:ACArgsPack(blockedList)];
     });
     
 }
 
-- (void)cbGetBlackListUsernames:(NSArray *)blockedList{
-    
-    [self callBackJSONWithFunction:@"cbGetBlackListUsernames" parameter:blockedList];
-    
-}
+
 
 
 - (void)addUserToBlackList:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager addUserToBlackList:[contactInfo objectForKey:@"username"] relationshipBoth:YES];
-        if (!error) {
-            //   NSLog(@"发送成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.contactManager addUserToBlackList:username relationshipBoth:YES];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
 
 
 - (void)deleteUserFromBlackList:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id contactInfo = [self getDataFromJSON:inArguments[0]];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.contactManager removeUserFromBlackList:[contactInfo objectForKey:@"username"]];
-        if (!error) {
-            //   NSLog(@"发送成功");
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.contactManager removeUserFromBlackList:username];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
@@ -1140,31 +951,24 @@ var chatterInfo = {
  */
 
 - (void)createPrivateGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-    if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
-    
-    EMGroupOptions *groupStyleSetting = [[EMGroupOptions alloc] init];
-    NSInteger userNumber = [[groupInfo objectForKey:@"maxUsers"] integerValue];
-    if (userNumber > 0){
-        groupStyleSetting.maxUsersCount = userNumber;
-    }
-    if ([[groupInfo objectForKey:@"allowInvite"] isEqual:@"true"] || [[groupInfo objectForKey:@"allowInvite"] integerValue] == 1){  /// 创建不同类型的群组，这里需要才传入不同的类型
-        groupStyleSetting.style = EMGroupStylePrivateMemberCanInvite;  //所有群成员都可以邀请非成员进群
-    }else{
-        groupStyleSetting.style = EMGroupStylePrivateOnlyOwnerInvite;  //有创建者可以邀请非成员进群
-    }
-    
-    NSArray *members=[groupInfo objectForKey:@"members"];
-    if(![members isKindOfClass:[NSArray class]]){
-        members=[[groupInfo objectForKey:@"members"] JSONValue];
-    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        EMGroupOptions *groupStyleSetting = [[EMGroupOptions alloc] init];
+        NSInteger userNumber = [numberArg(info[@"maxUsers"]) integerValue];
+        if (userNumber > 0){
+            groupStyleSetting.maxUsersCount = userNumber;
+        }
+        BOOL allowInvite = [stringArg(info[@"allowInvite"]) isEqual:@"true"] || numberArg(info[@"allowInvite"]).boolValue;
+        groupStyleSetting.style = allowInvite ? EMGroupStylePrivateMemberCanInvite : EMGroupStylePrivateOnlyOwnerInvite;
+        NSArray *members = arrayArg(info[@"members"]);
+        NSString *groupName = stringArg(info[@"groupName"]);
+        NSString *desc = stringArg(info[@"desc"]);
+        NSString *msg = stringArg(info[@"initialWelcomeMessage"]);
         EMError *error;
-        EMGroup *group=[self.sharedInstance.groupManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:members message:[groupInfo objectForKey:@"initialWelcomeMessage"] setting:groupStyleSetting error:&error];
-        
+        EMGroup *group=[self.sharedClient.groupManager createGroupWithSubject:groupName description:desc invitees:members message:msg setting:groupStyleSetting error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
         [self onGroupCreatedWithGroup:group andError:error];
     });
 }
@@ -1181,31 +985,24 @@ var chatterInfo = {
  }
  */
 - (void)createPublicGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-     if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
-    
-    EMGroupOptions *groupStyleSetting = [[EMGroupOptions alloc] init];
-    NSInteger userNumber = [[groupInfo objectForKey:@"maxUsers"] integerValue];
-    if (userNumber > 0){
-        groupStyleSetting.maxUsersCount = userNumber;
-    }
-    if ([[groupInfo objectForKey:@"needApprovalRequired"] isEqual:@"true"] || [[groupInfo objectForKey:@"needApprovalRequired"] integerValue] == 1){  /// 创建不同类型的群组，这里需要才传入不同的类型
-        groupStyleSetting.style = EMGroupStylePublicJoinNeedApproval;  //所有群成员都可以邀请非成员进群
-    }else{
-        groupStyleSetting.style = EMGroupStylePublicOpenJoin;  //有创建者可以邀请非成员进群
-    }
-    
-    NSArray *members=[groupInfo objectForKey:@"members"];
-    if(![members isKindOfClass:[NSArray class]]){
-        members=[[groupInfo objectForKey:@"members"] JSONValue];
-    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        EMGroupOptions *groupStyleSetting = [[EMGroupOptions alloc] init];
+        NSInteger userNumber = [numberArg(info[@"maxUsers"]) integerValue];
+        if (userNumber > 0){
+            groupStyleSetting.maxUsersCount = userNumber;
+        }
+        BOOL needApprovalRequired = [stringArg(info[@"needApprovalRequired"]) isEqual:@"true"] || numberArg(info[@"needApprovalRequired"]).boolValue;
+        groupStyleSetting.style = needApprovalRequired ? EMGroupStylePublicJoinNeedApproval : EMGroupStylePublicOpenJoin;
+        NSArray *members = arrayArg(info[@"members"]);
+        NSString *groupName = stringArg(info[@"groupName"]);
+        NSString *desc = stringArg(info[@"desc"]);
+        NSString *msg = stringArg(info[@"initialWelcomeMessage"]);
         EMError *error;
-        EMGroup *group = [self.sharedInstance.groupManager createGroupWithSubject:[groupInfo objectForKey:@"groupName"] description:[groupInfo objectForKey:@"desc"] invitees:members message:[groupInfo objectForKey:@"initialWelcomeMessage"] setting:groupStyleSetting error:&error];
-        
+        EMGroup *group=[self.sharedClient.groupManager createGroupWithSubject:groupName description:desc invitees:members message:msg setting:groupStyleSetting error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
         [self onGroupCreatedWithGroup:group andError:error];
     });
 }
@@ -1215,30 +1012,25 @@ var chatterInfo = {
     if(error){
         [dict setValue:@(NO) forKey:@"isSuccess"];
         [dict setValue:error.description forKey:@"errorStr"];
+        UEX_LOG_ERROR(error);
         
     }else{
         [dict setValue:@(YES) forKey:@"isSuccess"];
-        [dict setValue:[_mgr analyzeEMGroup:group] forKey:@"group"];
+        [dict setValue:[self.mgr analyzeEMGroup:group] forKey:@"group"];
     }
-    [self callBackJSONWithFunction:@"onGroupCreated" parameter:dict];
+    [self callbackWithFunctionName:@"onGroupCreated" obj:dict];
 }
 
 - (void)addUsersToGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-  id groupInfo = [self getDataFromJSON:inArguments[0]];
-  if(![groupInfo isKindOfClass:[NSDictionary class]]) return;
-    
-    NSArray *newmembers=[groupInfo objectForKey:@"newmembers"];
-    if(![newmembers isKindOfClass:[NSArray class]]){
-        newmembers=[[groupInfo objectForKey:@"newmembers"] JSONValue];
-    }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        EMGroup *group=[self.sharedInstance.groupManager addOccupants:newmembers toGroup:[groupInfo objectForKey:@"groupId"] welcomeMessage:[groupInfo objectForKey:@"inviteMessage"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSArray *newMembers = arrayArg(info[@"newmembers"]);
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *message = stringArg(info[@"inviteMessage"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager addOccupants:newMembers toGroup:groupId welcomeMessage:message error:&error];
         if(error){
-            
+            UEX_LOG_ERROR(error);
         }
     });
 
@@ -1254,24 +1046,22 @@ var chatterInfo = {
   */
 
 - (void)removeUserFromGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id removeUser = [self getDataFromJSON:inArguments[0]];
-    if(![removeUser isKindOfClass:[NSDictionary class]]) return;
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        if([[removeUser objectForKey:@"username"] isKindOfClass:[NSArray class]]){
-            [self.sharedInstance.groupManager removeOccupants:[removeUser objectForKey:@"username"] fromGroup:[removeUser objectForKey:@"groupId"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSArray *usernames = arrayArg(info[@"username"]);
+        if (!usernames) {
+            NSString *username = stringArg(info[@"username"]);
+            if (username) {
+                usernames = @[username];
+            }
         }
-        if([[removeUser objectForKey:@"username"] isKindOfClass:[NSString class]]){
-            error=nil;
-            [self.sharedInstance.groupManager removeOccupants:@[[removeUser objectForKey:@"username"]] fromGroup:[removeUser objectForKey:@"groupId"] error:&error];
+        NSString *groupId = stringArg(info[@"groupId"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager removeOccupants:usernames fromGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
-    
-    
 }
 
 /*
@@ -1285,29 +1075,23 @@ var chatterInfo = {
  }
  */
 - (void)joinGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id joinGroupInfo = [self getDataFromJSON:inArguments[0]];
-    if(![joinGroupInfo isKindOfClass:[NSDictionary class]]) return;
-    NSString *groupId = joinGroupInfo[@"groupId"];
-    NSString *groupName = joinGroupInfo[@"groupName"];
-    NSString *reason = joinGroupInfo[@"reason"];
-//    if (!reason) {
-//        [self.sharedInstance.groupManager joinPublicGroup:groupId error:&error];
-//    }else{
-//        [self.sharedInstance.groupManager applyJoinPublicGroup:groupId message:reason error:&error];
-    //    }
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        EMGroup *group=[self.sharedInstance.groupManager searchPublicGroupWithId:groupId error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *reason = stringArg(info[@"reason"]);
+        
+        EMError *error = nil;
+        EMGroup *group = [self.sharedClient.groupManager searchPublicGroupWithId:groupId error:&error];
         if(!error){
-            if(group.setting.style==EMGroupStylePublicOpenJoin){
-                [self.sharedInstance.groupManager joinPublicGroup:groupId error:&error];
+            if(group.setting.style == EMGroupStylePublicOpenJoin){
+                [self.sharedClient.groupManager joinPublicGroup:groupId error:&error];
+            }else{
+                [self.sharedClient.groupManager applyJoinPublicGroup:groupId message:reason error:&error];
             }
-            else{
-                [self.sharedInstance.groupManager applyJoinPublicGroup:groupId message:reason error:&error];
-            }
+        }
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
     });
 }
@@ -1320,16 +1104,14 @@ var chatterInfo = {
  }
  */
 - (void)exitFromGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    
-    id exitInfo = [self getDataFromJSON:inArguments[0]];
-    if(![exitInfo isKindOfClass:[NSDictionary class]]) return;
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        [self.sharedInstance.groupManager leaveGroup:[exitInfo objectForKey:@"groupId"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager leaveGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
     
 }
@@ -1342,15 +1124,15 @@ var chatterInfo = {
  */
 
 - (void)exitAndDeleteGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id exitAndDeleteInfo = [self getDataFromJSON:inArguments[0]];
-     if(![exitAndDeleteInfo isKindOfClass:[NSDictionary class]]) return;
-    
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        [self.sharedInstance.groupManager destroyGroup:[exitAndDeleteInfo objectForKey:@"groupId"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager destroyGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
 }
 /*
@@ -1369,44 +1151,46 @@ var chatterInfo = {
  }
  */
 - (void)getGroupsFromServer:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    
-    id getGroup = [self getDataFromJSON:inArguments[0]];
-    
-
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:2];
-    NSArray *groups;
-    NSMutableArray *grouplist = [NSMutableArray arrayWithCapacity:10] ;
-    
-    if ([[getGroup objectForKey:@"loadCache"] isEqual:@"true"]||[[getGroup objectForKey:@"loadCache"] integerValue] == 1){
-        [dict setValue:@"0" forKey:@"result"];
-        groups = [self.sharedInstance.groupManager loadAllMyGroupsFromDB];
-        
-        for (EMGroup  *group in groups){
-            [grouplist addObject:[_mgr analyzeEMGroup:group]];
-        }
-        [dict setValue:grouplist forKey:@"grouplist"];
-        [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict];
-    }else{
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-            
-            EMError *error=nil;
-            NSArray *groups = [self.sharedInstance.groupManager getMyGroupsFromServerWithError:&error];
-            if (!error) {
-                [dict setValue:@"0" forKey:@"result"];
-                for (EMGroup  *group in groups){
-                    [grouplist addObject:[_mgr analyzeEMGroup:group]];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        NSArray *(^getGrouplist)(NSArray *groups) = ^(NSArray *groups){
+            NSMutableArray *grouplist = [NSMutableArray array];
+            for (EMGroup  *group in groups){
+                NSDictionary *groupDict = [self.mgr analyzeEMGroup:group];
+                if (groupDict) {
+                    [grouplist addObject:groupDict];
                 }
-                [dict setValue:grouplist forKey:@"grouplist"];
-                
-            }else{
-                [dict setValue:@"1" forKey:@"result"];
             }
-            [self callBackJSONWithFunction:@"cbGetGroupsFromServer" parameter:dict];
-        });
-    }
+            return grouplist;
+        };
+        
+        
+        
+        
+        
+        BOOL loadCache = [stringArg(info[@"loadCache"]) isEqual:@"true"] || numberArg(info[@"loadCache"]).boolValue;
+        if (loadCache) {
+            NSArray *groups = [self.sharedClient.groupManager loadAllMyGroupsFromDB];
+            [dict setValue:@0 forKey:@"result"];
+            [dict setValue:getGrouplist(groups) forKey:@"grouplist"];
+        }else{
+            EMError *error=nil;
+            NSArray *groups = [self.sharedClient.groupManager getMyGroupsFromServerWithError:&error];
+            if (!error) {
+                [dict setValue:@0 forKey:@"result"];
+                [dict setValue:getGrouplist(groups) forKey:@"grouplist"];
+            }else{
+                [dict setValue:@1 forKey:@"result"];
+                [dict setValue:error.errorDescription forKey:@"errorMsg"];
+                UEX_LOG_ERROR(error);
+            }
+        }
+        [self callbackWithFunctionName:@"cbGetGroupsFromServer" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
+        
+    });
+
     
 }
 /*
@@ -1416,32 +1200,34 @@ var chatterInfo = {
 
  */
 - (void)getAllPublicGroupsFromServer:(NSMutableArray*)inArguments{
-    
-    NSInteger pageSize = -1;
-    NSString *cursor = nil;
-    if([inArguments count]>0){
-        id info = [self getDataFromJSON:inArguments[0]];
-        if([info objectForKey:@"pageSize"]&&[[info objectForKey:@"pageSize"] length]>0) pageSize = [[info objectForKey:@"pageSize"] integerValue];
-        if([info objectForKey:@"cursor"] &&[[info objectForKey:@"cursor"] length]>0) cursor = [info objectForKey:@"cursor"];
-    }
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+        NSString *cursor = stringArg(info[@"cursor"]);
+        NSNumber *inPageSize = numberArg(info[@"pageSize"]);
+        NSInteger pageSize = inPageSize ? inPageSize.integerValue : -1;
         EMError *error=nil;
-        EMCursorResult *result=[self.sharedInstance.groupManager getPublicGroupsFromServerWithCursor:cursor pageSize:pageSize error:&error];
+        EMCursorResult *result=[self.sharedClient.groupManager getPublicGroupsFromServerWithCursor:cursor pageSize:pageSize error:&error];
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+        
         if(error){
-            [dict setValue:@"1" forKey:@"result"];
+            [dict setValue:@1 forKey:@"result"];
             [dict setValue:error.description forKey:@"errorMsg"];
+            UEX_LOG_ERROR(error);
         }else{
-            [dict setValue:@"0" forKey:@"result"];
+            [dict setValue:@0 forKey:@"result"];
             NSMutableArray *grouplist = [NSMutableArray array];
             for(EMGroup *group in result.list){
-                [grouplist addObject:[_mgr analyzeEMGroup:group]];
+                NSDictionary *groupDict = [self.mgr analyzeEMGroup:group];
+                if(groupDict){
+                   [grouplist addObject:group];
+                }
+                
             }
             [dict setValue:grouplist forKey:@"grouplist"];
             [dict setValue:result.cursor forKey:@"cursor"];
         }
-        [self callBackJSONWithFunction:@"cbGetAllPublicGroupsFromServer" parameter:dict];
+        [self callbackWithFunctionName:@"cbGetAllPublicGroupsFromServer" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
     });
     
 }
@@ -1466,25 +1252,21 @@ var chatterInfo = {
  }
  */
 - (void)getGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
         
-        EMError *error=nil;
-        EMGroup *group= [self.sharedInstance.groupManager fetchGroupInfo:[groupInfo objectForKey:@"groupId"] includeMembersList:YES error:&error];
-        [self cbGetGroup:group error:error];
+        EMError *error = nil;
+        EMGroup *group = [self.sharedClient.groupManager fetchGroupInfo:groupId includeMembersList:YES error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
+        NSDictionary *dict = [self.mgr analyzeEMGroup:group];
+        [self callbackWithFunctionName:@"cbGetGroup" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
     });
 }
 
-- (void)cbGetGroup:(EMGroup *)group
-             error:(EMError *)error{
-    if(!error){
-        [self callBackJSONWithFunction:@"cbGetGroup" parameter:[_mgr analyzeEMGroup:group]];
-    }
-}
 
 /*
  #####[5.20]blockGroupMessage(param)//屏蔽群消息
@@ -1500,26 +1282,26 @@ var chatterInfo = {
  }
  */
 - (void)blockGroupMessage:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *pError = nil;
-        [self.sharedInstance.groupManager blockGroup:[groupInfo objectForKey:@"groupId"] error:&pError];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager blockGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
     
 }
 - (void)unblockGroupMessage:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *pError = nil;
-        [self.sharedInstance.groupManager unblockGroup:[groupInfo objectForKey:@"groupId"] error:&pError];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager unblockGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
     
 }
@@ -1533,111 +1315,122 @@ var chatterInfo = {
  }
  */
 - (void)changeGroupName:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id groupInfo = [self getDataFromJSON:inArguments[0]];
-    
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error;
-        [self.sharedInstance.groupManager changeGroupSubject:[groupInfo objectForKey:@"changedGroupName"] forGroup:[groupInfo objectForKey:@"groupId"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *newGroupName = stringArg(info[@"changedGroupName"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager changeGroupSubject:newGroupName forGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
 }
 
 - (void)blockUser:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    NSArray *users=[[NSArray alloc]initWithObjects:[info objectForKey:@"username"], nil];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSArray *usernames = arrayArg(info[@"username"]);
+        if (!usernames) {
+            NSString *username = stringArg(info[@"username"]);
+            if(username){
+                usernames = @[username];
+            }
+        }
         EMError *error = nil;
-        [self.sharedInstance.groupManager blockOccupants:users fromGroup:[info objectForKey:@"groupId"] error:&error];
+        [self.sharedClient.groupManager blockOccupants:usernames fromGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
     
 }
 - (void)unblockUser:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    NSArray *users=[[NSArray alloc]initWithObjects:[info objectForKey:@"username"], nil];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSArray *usernames = arrayArg(info[@"username"]);
+        if (!usernames) {
+            NSString *username = stringArg(info[@"username"]);
+            if(username){
+                usernames = @[username];
+            }
+        }
         EMError *error = nil;
-        [self.sharedInstance.groupManager unblockOccupants:users forGroup:[info objectForKey:@"groupId"] error:&error];
+        [self.sharedClient.groupManager unblockOccupants:usernames forGroup:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
     });
     
 }
 - (void)getBlockedUsers:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
+        ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+
         EMError *error = nil;
-        NSArray *users= [self.sharedInstance.groupManager fetchGroupBansList:[info objectForKey:@"groupId"] error:&error];
-        if(!error){
-            [self callBackJSONWithFunction:@"cbGetBlockedUsers" parameter:@{@"usernames":users}];
+        NSArray *usernames = [self.sharedClient.groupManager fetchGroupBansList:groupId error:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
         }
+        NSDictionary *dict = usernames ? @{@"usernames": usernames} : nil;
+        [self callbackWithFunctionName:@"cbGetBlockedUsers" obj:dict];
+        [cb executeWithArguments: ACArgsPack(dict)];
     });
 }
 //3.0.22新增接口
 - (void)acceptJoinApplication:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.groupManager acceptJoinApplication:[info objectForKey:@"groupId"] applicant:[info objectForKey:@"username"]];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = [self.sharedClient.groupManager acceptJoinApplication:groupId applicant:username];
         if(error){
-            
+            UEX_LOG_ERROR(error);
         }
     });
 }
 //3.0.22新增接口
 - (void)declineJoinApplication:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error = [self.sharedInstance.groupManager declineJoinApplication:[info objectForKey:@"groupId"] applicant:[info objectForKey:@"username"] reason:[info objectForKey:@"reason"]];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *username = stringArg(info[@"username"]);
+        NSString *reason = stringArg(info[@"reason"]);
+        EMError *error = [self.sharedClient.groupManager declineJoinApplication:groupId applicant:username reason:reason];
         if(error){
-            
+            UEX_LOG_ERROR(error);
         }
     });
 }
 //3.0.22新增接口
 - (void)acceptInvitationFromGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=nil;
-        EMGroup *group = [self.sharedInstance.groupManager acceptInvitationFromGroup:[info objectForKey:@"groupId"] inviter:[info objectForKey:@"username"] error:&error];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *username = stringArg(info[@"username"]);
+        EMError *error = nil;
+        [self.sharedClient.groupManager acceptInvitationFromGroup:groupId inviter:username error:&error];
         if(error){
-            
+            UEX_LOG_ERROR(error);
         }
     });
 }
 //3.0.22新增接口
 - (void)declineInvitationFromGroup:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id info = [self getDataFromJSON:inArguments[0]];
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error= [self.sharedInstance.groupManager declineInvitationFromGroup:[info objectForKey:@"groupId"] inviter:[info objectForKey:@"username"] reason:[info objectForKey:@"reason"]];
+        ACArgsUnpack(NSDictionary *info) = inArguments;
+        NSString *groupId = stringArg(info[@"groupId"]);
+        NSString *username = stringArg(info[@"username"]);
+        NSString *reason = stringArg(info[@"reason"]);
+        EMError *error= [self.sharedClient.groupManager declineInvitationFromGroup:groupId inviter:username reason:reason];
         if(error){
-            
+            UEX_LOG_ERROR(error);
         }
     });
 }
@@ -1719,28 +1512,30 @@ var chatterInfo = {
 
 
 - (void)makeVoiceCall:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
-    }
-    id callInfo = [self getDataFromJSON:inArguments[0]];
+    ACArgsUnpack(NSDictionary *info) = inArguments;
+
+    NSString *username = stringArg(info[@"username"]);
     EMError *error;
-    _mgr.callSession = [self.sharedInstance.callManager makeVoiceCall:[callInfo objectForKey:@"username"] error:&error];
+    self.mgr.callSession = [self.sharedClient.callManager makeVoiceCall:username error:&error];
+    if (error) {
+        UEX_LOG_ERROR(error);
+    }
 }
 
 
 - (void)answerCall:(NSMutableArray *)inArguments{
     
-    [self.sharedInstance.callManager answerCall:_mgr.callSession.sessionId];
+    [self.sharedClient.callManager answerCall:self.mgr.callSession.sessionId];
 }
 
 - (void)rejectCall:(NSMutableArray *)inArguments{
     
-    [self.sharedInstance.callManager endCall:_mgr.callSession.sessionId reason:EMCallEndReasonDecline];
+    [self.sharedClient.callManager endCall:self.mgr.callSession.sessionId reason:EMCallEndReasonDecline];
 }
 
 - (void)endCall:(NSMutableArray *)inArguments{
     
-    [self.sharedInstance.callManager endCall:_mgr.callSession.sessionId reason:EMCallEndReasonHangup];
+    [self.sharedClient.callManager endCall:self.mgr.callSession.sessionId reason:EMCallEndReasonHangup];
 }
 
 #pragma mark - APNS
@@ -1757,14 +1552,14 @@ var chatterInfo = {
 	errorInfo;//注册失败时的推送信息
  }
  */
+static ACJSFunctionRef *regAPNSFunc = nil;
+static BOOL isEasemobRegisterRemoteNofitication = NO;
 - (void)registerRemoteNotification:(NSMutableArray *)inArguments{
+
+    isEasemobRegisterRemoteNofitication = YES;
+    regAPNSFunc = JSFunctionArg(inArguments.lastObject);
     UIApplication *application = [UIApplication sharedApplication];
-    application.applicationIconBadgeNumber = 0;
-    
-
-    
 #if !TARGET_IPHONE_SIMULATOR
-
     if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
         [application registerForRemoteNotifications];
     }else{
@@ -1776,59 +1571,64 @@ var chatterInfo = {
 #endif
     
     
-    self.mgr.hasRegisteredAPNs = YES;
-    
 }
 
 // 将得到的deviceToken传给SDK
 + (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken{
-    if (![uexEasemobManager sharedInstance].hasRegisteredAPNs) {
+    if (!isEasemobRegisterRemoteNofitication) {
         return;
     }
+    isEasemobRegisterRemoteNofitication = NO;
     [[EMClient sharedClient] bindDeviceToken:deviceToken];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setValue:@"1" forKey:@"result"];
-    [[uexEasemobManager sharedInstance] callBackJSONWithFunction:@"cbRegisterRemoteNotification" parameter:dict];
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kUexEasemobUserDefaultsAPNSUsageKey];
+    if (regAPNSFunc) {
+        [regAPNSFunc executeWithArguments:ACArgsPack(kUexNoError)];
+        regAPNSFunc = nil;
+    }
+    [[uexEasemobManager sharedManager] callbackWithFunctionName:@"cbRegisterRemoteNotification" obj:@{@"result": @1}];
+    
 }
 
 // 注册deviceToken失败
 + (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error{
-    if (![uexEasemobManager sharedInstance].hasRegisteredAPNs) {
+    if (!isEasemobRegisterRemoteNofitication) {
         return;
     }
-    //[[uexEasemobManager sharedInstance].SDK application:application didFailToRegisterForRemoteNotificationsWithError:error];
+    isEasemobRegisterRemoteNofitication = NO;
+    [[NSUserDefaults standardUserDefaults]setBool:NO forKey:kUexEasemobUserDefaultsAPNSUsageKey];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setValue:@"2" forKey:@"result"];
+    [dict setValue:@2 forKey:@"result"];
     [dict setValue:[error localizedDescription] forKey:@"errorInfo"];
-    [[uexEasemobManager sharedInstance] callBackJSONWithFunction:@"cbRegisterRemoteNotification" parameter:dict];
+    if (regAPNSFunc) {
+        [regAPNSFunc executeWithArguments:ACArgsPack(uexErrorMake(error.code,error.localizedDescription))];
+        regAPNSFunc = nil;
+    }
+    [[uexEasemobManager sharedManager] callbackWithFunctionName:@"cbRegisterRemoteNotification" obj:@{@"result": @2}];
     
 }
 
 
 - (void)updatePushOptions:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
+
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+    EMPushOptions *options = [self.sharedClient pushOptions];
+    NSString *nickname = stringArg(info[@"nickname"]);
+    if (nickname) {
+        options.nickname = nickname;
     }
-    
-    id info = [self getDataFromJSON:inArguments[0]];
-    EMError *error;
-    //EMPushOptions *options=[self.sharedInstance getPushOptionsFromServerWithError:&error];
-    EMPushOptions *options = [self.sharedInstance pushOptions];
-    
-    if([[info objectForKey:@"nickname"] length]>0){
-        options.nickname = [info objectForKey:@"nickname"];
-    }
-    if([[info objectForKey:@"displayStyle"] length]>0){
-        NSInteger displayStyle = [[info objectForKey:@"displayStyle"] integerValue];
+    NSNumber *inDisplayStyle = numberArg(info[@"displayStyle"]);
+    if (inDisplayStyle) {
+        NSInteger displayStyle = inDisplayStyle.integerValue;
         if(displayStyle == 0){
             options.displayStyle = EMPushDisplayStyleSimpleBanner;
         }else if(displayStyle == 1){
             options.displayStyle = EMPushDisplayStyleMessageSummary;
         }
-        
     }
-    if([[info objectForKey:@"noDisturbingStyle"] length]>0 ){
-        NSInteger noDisturbingStyle = [[info objectForKey:@"noDisturbingStyle"] integerValue];
+    
+    NSNumber *inNoDisturbingStyle = numberArg(info[@"noDisturbingStyle"]);
+    if (inNoDisturbingStyle) {
+        NSInteger noDisturbingStyle = inNoDisturbingStyle.integerValue;
         if(noDisturbingStyle == 0){
             options.noDisturbStatus = EMPushNoDisturbStatusDay ;
         }else if(noDisturbingStyle == 1){
@@ -1837,68 +1637,78 @@ var chatterInfo = {
             options.noDisturbStatus = EMPushNoDisturbStatusClose;
         }
     }
-    if([[info objectForKey:@"noDisturbingStartH"] length]>0){
-        options.noDisturbingStartH = [[info objectForKey:@"noDisturbingStartH"] integerValue];
+    NSNumber *noDisturbingStartH = numberArg(info[@"noDisturbingStartH"]);
+    if (noDisturbingStartH) {
+        options.noDisturbingStartH = noDisturbingStartH.integerValue;
     }
-    if([[info objectForKey:@"noDisturbingEndH"] length]>0){
-        options.noDisturbingEndH = [[info objectForKey:@"noDisturbingEndH"] integerValue];
+    NSNumber *noDisturbingEndH = numberArg(info[@"noDisturbingEndH"]);
+    if (noDisturbingEndH) {
+        options.noDisturbingEndH = noDisturbingEndH.integerValue;
     }
+    EMError *error = [self.sharedClient updatePushOptionsToServer];
+    if (error) {
+        UEX_LOG_ERROR(error);
+    }
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    [dict setValue:options.nickname forKey:@"nickname"];
+    [dict setValue:@(options.noDisturbingStartH) forKey:@"noDisturbingStartH"];
+    [dict setValue:@(options.noDisturbingEndH) forKey:@"noDisturbingEndH"];
+    NSNumber *noDisturbStatus;
+    switch (options.noDisturbStatus) {
+        case EMPushNoDisturbStatusClose:
+            noDisturbStatus = @2;
+            break;
+        case EMPushNoDisturbStatusCustom:
+            noDisturbStatus = @1;
+            break;
+        case EMPushNoDisturbStatusDay:
+            noDisturbStatus = @0;
+        default:
+            break;
+    }
+    [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
+    NSNumber *displayStyle;
+    switch (options.displayStyle) {
+        case EMPushDisplayStyleSimpleBanner:
+            displayStyle = @0;
+            break;
+        case EMPushDisplayStyleMessageSummary:
+            displayStyle = @1;
+            break;
+        default:
+            break;
+    }
+    [dict setValue:displayStyle forKey:@"displayStyle"];
     
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=[self.sharedInstance updatePushOptionsToServer];
-        if(!error){
-            //        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-            //
-            //        [dict setValue:options.nickname forKey:@"nickname"];
-            //        [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingStartH"];
-            //        [dict setValue:[NSString stringWithFormat:@"%lu",(unsigned long)options.noDisturbingStartH] forKey:@"noDisturbingEndH"];
-            //        NSString *noDisturbStatus;
-            //
-            //        switch (options.noDisturbStatus) {
-            //            case EMPushNoDisturbStatusClose:
-            //                noDisturbStatus = @"2";
-            //                break;
-            //            case EMPushNoDisturbStatusCustom:
-            //                noDisturbStatus = @"1";
-            //                break;
-            //            case EMPushNoDisturbStatusDay:
-            //                noDisturbStatus = @"0";
-            //            default:
-            //                break;
-            //        }
-            //        NSString *displayStyle = @"";
-            //        if(options.displayStyle == EMPushDisplayStyleSimpleBanner){
-            //            displayStyle = @"0";
-            //        }else if(options.displayStyle == EMPushDisplayStyleMessageSummary){
-            //            displayStyle = @"1";
-            //        }
-            //
-            //        [dict setValue:displayStyle forKey:@"displayStyle"];
-            //        [dict setValue:noDisturbStatus forKey:@"noDisturbingStyle"];
-            //        [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:dict];
-            [self callBackJSONWithFunction:@"cbUpdatePushOptions" parameter:info];
-        }
-    });
+    [self callbackWithFunctionName:@"cbUpdatePushOptions" obj:dict];
+    [cb executeWithArguments:ACArgsPack(dict)];
+
 }
 - (void)ignoreGroupPushNotification:(NSMutableArray *)inArguments{
-    if(inArguments.count<1){
-        return;
+    ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
+    NSString *groupId = stringArg(info[@"groupId"]);
+    NSInteger inFlag = numberArg(info[@"isIgnore"]).integerValue;
+    EMError *error = nil;
+    switch (inFlag) {
+        case 1:
+            error = [self.sharedClient.groupManager ignoreGroupPush:groupId ignore:YES];
+            break;
+        case 2:
+            error = [self.sharedClient.groupManager ignoreGroupPush:groupId ignore:NO];
+            break;
+        default:
+            break;
     }
-    id info = [self getDataFromJSON:inArguments[0]];
-    BOOL isIgnore=NO;
-    if([info objectForKey:@"isIgnore"]){
-        if([[info objectForKey:@"isIgnore"] boolValue]==YES){
-            isIgnore=YES;
-        }
+
+    if (error) {
+        UEX_LOG_ERROR(error);
     }
-    
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-        EMError *error=[self.sharedInstance.groupManager ignoreGroupPush:[info objectForKey:@"groupId"] ignore:isIgnore];
-        if(!error){
-            NSArray *groups=[self.sharedInstance.groupManager getAllIgnoredGroupIds];
-            [self callBackJSONWithFunction:@"cbIgnoreGroupPushNotification" parameter:@{@"groupIds":groups}];
-        }
+
+        NSArray *groups = [self.sharedClient.groupManager getAllIgnoredGroupIds];
+        NSDictionary *dict = groups ? @{@"groupIds": groups} : nil;
+        [self callbackWithFunctionName:@"cbIgnoreGroupPushNotification" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
     });
 }
 
@@ -1906,15 +1716,11 @@ var chatterInfo = {
 
 
 #pragma mark - private method
-- (void)callBackJSONWithFunction:(NSString *)functionName parameter:(id)obj{
-    [_mgr callBackJSONWithFunction:functionName parameter:obj];
+
+- (void)callbackWithFunctionName:(NSString *)funcName obj:(id)obj{
+    [self.mgr callbackWithFunctionName:funcName obj:obj];
 }
 
-- (void)initSettings{
-    self.mgr = [uexEasemobManager sharedInstance];
-    self.sharedInstance = self.mgr.SDK;
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"uexEasemobInitSuccess" object:nil];
-}
 
 
 
