@@ -616,7 +616,7 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
     }
 
     [result setValue:message.messageId forKey:@"messageId"];
-    [result setValue:[NSString stringWithFormat:@"%lld",message.timestamp] forKey:@"messageTime"];
+    [result setValue:@(message.timestamp) forKey:@"messageTime"];
     [result setValue:@(message.isDeliverAcked) forKey:@"isDelievered"];
     [result setValue:@(message.isReadAcked) forKey:@"isAcked"];
     [result setValue:@(message.isRead) forKey:@"isRead"];

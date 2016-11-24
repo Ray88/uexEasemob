@@ -293,7 +293,7 @@ static EMChatType getMessageType(NSDictionary *info){
 
 - (void)sendText:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSString *content = stringArg(info[@"content"]);
     EMTextMessageBody *msgBody = [[EMTextMessageBody alloc] initWithText:content];
     [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
@@ -303,7 +303,7 @@ static EMChatType getMessageType(NSDictionary *info){
 
 - (void)sendVoice:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
     NSString *displayName = stringArg(info[@"displayName"]);
     NSNumber *length = numberArg(info[@"length"]);
@@ -316,7 +316,7 @@ static EMChatType getMessageType(NSDictionary *info){
 
 - (void)sendPicture:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
     NSString *displayName = stringArg(info[@"displayName"]);
     EMImageMessageBody *msgBody = [[EMImageMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
@@ -327,7 +327,7 @@ static EMChatType getMessageType(NSDictionary *info){
 
 - (void)sendLocationMsg:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSNumber *lat = numberArg(info[@"latitude"]);
     NSNumber *lon = numberArg(info[@"longitude"]);
     NSString *address = stringArg(info[@"locationAddress"]);
@@ -339,7 +339,7 @@ static EMChatType getMessageType(NSDictionary *info){
         
 - (void)sendVideo:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
     NSString *displayName = stringArg(info[@"displayName"]);
     NSNumber *length = numberArg(info[@"length"]);
@@ -353,7 +353,7 @@ static EMChatType getMessageType(NSDictionary *info){
     
     
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
     NSString *displayName = stringArg(info[@"displayName"]);
     EMFileMessageBody *msgBody = [[EMFileMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
@@ -362,7 +362,7 @@ static EMChatType getMessageType(NSDictionary *info){
         
 - (void)sendCmdMessage:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
-    NSString *username = stringArg(info[@"usernamme"]);
+    NSString *username = stringArg(info[@"toUsername"]);
     NSString *action = stringArg(info[@"action"]);
     
     EMCmdMessageBody *msgBody = [[EMCmdMessageBody alloc] initWithAction:action];
@@ -693,6 +693,9 @@ var chatterInfo = {
         NSArray *conversationArray = [self.sharedClient.chatManager loadAllConversationsFromDB];
 
         for(EMConversation *conversation in conversationArray){
+            if (!conversation.conversationId || conversation.conversationId.length == 0) {
+                continue;
+            }
             NSMutableDictionary *chatter = [NSMutableDictionary dictionary];
             switch (conversation.type) {
                 case EMConversationTypeChat:{
