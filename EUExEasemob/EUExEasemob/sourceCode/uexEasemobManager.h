@@ -48,15 +48,15 @@ static inline NSString *cbName(NSString * func){
 
 + (instancetype)sharedManager;
 
-
-
-
-
 - (EMError *)initializeEasemobWithOptions:(EMOptions *)option;
 
 - (void)callbackWithFunctionName:(NSString *)funcName obj:(id)obj;
 
 - (NSDictionary *)analyzeEMMessage:(EMMessage *)message;
-- (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation;
+- (void)asyncAnalyzeEMConversation:(EMConversation *)conversation completion:(void (^)(NSDictionary *))completion;
 - (NSDictionary *)analyzeEMGroup:(EMGroup *)group;
+
+- (void)registerCallback:(id<AppCanWebViewEngineObject>)engine;
+- (void)unregisterCallback:(id<AppCanWebViewEngineObject>)engine;
+- (void)unregisterAllCallback;
 @end

@@ -10,11 +10,30 @@
 
 #import <AppCanKit/ACEXTScope.h>
 
+
+@interface uexEesemobCallbackReceiver : NSObject
+@property (nonatomic,weak)id<AppCanWebViewEngineObject> engine;
+
+@end
+@implementation uexEesemobCallbackReceiver
+- (instancetype)initWithEngine:(id<AppCanWebViewEngineObject>)engine{
+    self = [super init];
+    if (self) {
+        _engine = engine;
+    }
+    return self;
+}
+@end
+
+
+
+
 @interface uexEasemobManager()<EMClientDelegate,EMChatManagerDelegate,EMCallManagerDelegate,EMCDDeviceManagerDelegate,EMContactManagerDelegate,EMGroupManagerDelegate,EMCDDeviceManagerProximitySensorDelegate,EMChatroomManagerDelegate>
 @property (nonatomic,strong)NSDictionary *launchOptions;
 @property (nonatomic,strong) NSDate *lastPlaySoundDate;
 @property (nonatomic,weak) EMCDDeviceManager *EMDevice;
 @property (nonatomic,assign)BOOL hasInitialized;
+@property (nonatomic,strong)NSMutableArray<uexEesemobCallbackReceiver *> *callbackReceivers;
 @end
 
 
@@ -59,11 +78,39 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
 - (void)didFinishLaunchingWithOptions:(NSDictionary *)launchOptions{
     _launchOptions = launchOptions;
     NSDictionary *userInfo = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-
     self.remoteLaunchDict = userInfo;
     
 
 }
+
+
+- (void)registerCallback:(id<AppCanWebViewEngineObject>)engine{
+    if (!engine) {
+        return;
+    }
+    [self.callbackReceivers addObject:[[uexEesemobCallbackReceiver alloc] initWithEngine:engine]];
+}
+
+- (void)unregisterCallback:(id<AppCanWebViewEngineObject>)engine{
+    if (!engine) {
+        return;
+    }
+    uexEesemobCallbackReceiver *target = nil;
+    for (uexEesemobCallbackReceiver *receiver in self.callbackReceivers) {
+        if (receiver.engine == engine) {
+            target = receiver;
+            break;
+        }
+    }
+    if (target) {
+        [self.callbackReceivers removeObject:target];
+    }
+}
+
+- (void)unregisterAllCallback{
+    [self.callbackReceivers removeAllObjects];
+}
+
 
 
 #pragma mark - 初始化SDK
@@ -194,9 +241,8 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
 - (void)didAutoLoginWithError:(EMError *)error{
     
     if (error) {
-        ACLogDebug(@"uexEasemob -> autoLoginError<%d>: %@",error.code,error.description);
-    }
-    else{
+        UEX_LOG_ERROR(error);
+    }else{
         [self callbackWithFunctionName:@"onConnected" obj:nil];
     }
 }
@@ -208,7 +254,7 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
     if (!hasMigrated) {
         [df setBool:YES forKey:kUexEasemobUserDefaultsDataMigrationFlag];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-            [_SDK dataMigrationTo3];
+            [_SDK migrateDatabaseToLatestSDK];
         });
     }
 }
@@ -345,7 +391,7 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
 - (void)didReceiveDeclinedGroupInvitation:(EMGroup *)aGroup
                                   invitee:(NSString *)aInvitee
                                    reason:(NSString *)aReason{
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:aGroup.groupId forKey:@"groupId"];
     [dict setValue:aInvitee forKey:@"invitee"];
     [dict setValue:aReason forKey:@"reason"];
@@ -355,9 +401,8 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
 }
 - (void)didReceiveAcceptedGroupInvitation:(EMGroup *)aGroup
                                   invitee:(NSString *)aInvitee{
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:aGroup.groupId forKey:@"groupId"];
-    [dict setValue:@"" forKey:@"reason"];
     [dict setValue:aInvitee forKey:@"inviter"];
     [self callbackWithFunctionName:@"onInvitationAccpted" obj:dict];
 }
@@ -410,7 +455,7 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
     
 }
 - (void)didReceiveAcceptedJoinGroup:(EMGroup *)aGroup{
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:3];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setValue:aGroup.groupId forKey:@"groupId"];
     [dict setValue:aGroup.subject forKey:@"groupName"];
     [dict setValue:aGroup.owner forKey:@"accepter"];
@@ -448,99 +493,61 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
     [dict setValue:aInviter forKey:@"username"];
     [self callbackWithFunctionName:@"onReceiveGroupInvitation" obj:dict];
 }
+#pragma mark - Call回调
+#pragma mark EMCallManagerDelegate
 
-#pragma mark - Call
-- (void)didReceiveCallIncoming:(EMCallSession *)callSession{
-    
-    self.callSession = callSession;
+
+- (void)callDidReceive:(EMCallSession *)aSession{
+    self.callSession = aSession;
     
     NSMutableDictionary *dictCallReceive = [NSMutableDictionary dictionary];
-    [dictCallReceive setValue:callSession.sessionId forKey:@"callId"];
-    [dictCallReceive setValue:callSession.remoteUsername forKey:@"from"];
-    NSNumber *callType = nil;
-    
-    switch (callSession.type) {
-        case EMCallTypeVoice:
-            callType = @0;
-            break;
-        case EMCallTypeVideo:
-            callType = @1;
-            break;
-            
-        default:
-            break;
-    }
-    if (!callType) {
-        return;
-    }
-    [dictCallReceive setValue:callType forKey:@"callType"];
+    [dictCallReceive setValue:aSession.callId forKey:@"callId"];
+    [dictCallReceive setValue:aSession.remoteName forKey:@"from"];
+    [dictCallReceive setValue:@(aSession.type) forKey:@"callType"];
     
     [self callbackWithFunctionName:@"onCallReceive" obj:dictCallReceive];
 }
-- (void)didReceiveCallConnected:(EMCallSession *)aSession{
-    
+
+
+- (void)callDidConnect:(EMCallSession *)aSession{
     [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @2}];
 }
-- (void)didReceiveCallAccepted:(EMCallSession *)aSession{
-    
+
+- (void)callDidAccept:(EMCallSession *)aSession{
     [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @3}];
 }
-- (void)didReceiveCallTerminated:(EMCallSession *)aSession
-                          reason:(EMCallEndReason)aReason
-                           error:(EMError *)aError{
-    
+
+
+- (void)callDidEnd:(EMCallSession *)aSession
+            reason:(EMCallEndReason)aReason
+             error:(EMError *)aError{
+    if (aError) {
+        UEX_LOG_ERROR(aError);
+    }
     [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @4}];
 }
-- (void)didReceiveCallUpdated:(EMCallSession *)aSession
-                         type:(EMCallStreamControlType)aType{
 
-    NSNumber *callState = nil;
+- (void)callStateDidChange:(EMCallSession *)aSession
+                      type:(EMCallStreamingStatus)aType{
     switch (aType) {
-        case EMCallStreamControlTypeVoicePause:
-            callState = @5;
-            break;
-        case EMCallStreamControlTypeVoiceResume:
-            callState = @7;
-            break;
-            
-        default:
-            break;
-    }
-    if (!callState) {
-        return;
-    }
-    [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": callState}];
-}
-- (void)didReceiveCallNetworkChanged:(EMCallSession *)callSession
-                              status:(EMCallNetworkStatus)aStatus{
-    
-        NSMutableDictionary *dictCallStateChanged = [NSMutableDictionary dictionary];
-        NSString *callState = nil;
-        switch (callSession.status) {
-            case EMCallSessionStatusRinging:
-                callState = @"1";
-                break;
-            case EMCallSessionStatusConnected:
-                callState = @"2";
-                break;
-            case EMCallSessionStatusAccepted:
-                callState = @"3";
-                break;
-//            case EMCallSessionStatusDisconnected:
-//                callState = @"4";
-//                break;
-            case EMCallSessionStatusConnecting:
-                callState = @"6";
-                break;
-
-            default:
-                break;
-        }
-        [dictCallStateChanged setValue:callState forKey:@"state"];
+        case EMCallStreamStatusVideoPause:
+        case EMCallStreamStatusVoicePause:
+            [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @5}];
+        break;
         
-        [self callbackWithFunctionName:@"onCallStateChanged" obj:dictCallStateChanged];
+        case EMCallStreamStatusVideoResume:
+        case EMCallStreamStatusVoiceResume:
+            [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @7}];
+        break;
+    }
+}
+
+
+- (void)callNetworkDidChange:(EMCallSession *)aSession
+                      status:(EMCallNetworkStatus)aStatus{
     
 }
+
 
 
 #pragma mark - APNS
@@ -553,7 +560,7 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
 
 }
 
-#pragma mark - CallBack Method
+#pragma mark - Callback Method
 
 - (void)callbackWithFunctionName:(NSString *)funcName obj:(id)obj{
     id param = nil;
@@ -710,11 +717,16 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
     return result;
 }
 
-- (NSDictionary *)analyzeEMConversation:(EMConversation *)conversation{
-    if (!conversation) {
-        return nil;
+
+
+- (void)asyncAnalyzeEMConversation:(EMConversation *)conversation completion:(void (^)(NSDictionary *))completion{
+    if (!completion) {
+        return;
     }
-    
+    if (!conversation) {
+        completion(nil);
+        return;
+    }
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     [result setValue:conversation.conversationId forKey:@"chatter"];
     switch (conversation.type) {
@@ -729,21 +741,24 @@ NSString *const uexEasemobManagerInitSuccessNotificationKey = @"uexEasemobManage
         case EMConversationTypeChatRoom:
             [result setValue:cEMChatTypeChatRoom forKey:@"chatType"];
             break;
-            
-        default:
-            break;
     }
-    
-    
-    NSMutableArray *msgList = [NSMutableArray arrayWithCapacity:1];
-    NSArray *messages = [conversation loadMoreMessagesFromId:nil limit:10000 direction:EMMessageSearchDirectionUp];
-    for(EMMessage *msg in messages){
-        [msgList addObject:[self analyzeEMMessage:msg]];
-    }
-    [result setValue:msgList forKey:@"messages"];
-    
-    return result;
+    [conversation loadMessagesStartFromId:nil count:10000 searchDirection:EMMessageSearchDirectionUp completion:^(NSArray *aMessages, EMError *aError) {
+        if (aError) {
+            UEX_LOG_ERROR(aError);
+        }else{
+            NSMutableArray *msgList = [NSMutableArray array];
+            for (EMMessage *msg in aMessages) {
+                NSDictionary *msgDict = [self analyzeEMMessage:msg];
+                if (msgDict) {
+                    [msgList addObject:msgDict];
+                }
+            }
+            [result setValue:msgList forKey:@"messages"];
+        }
+        completion(result);
+    }];
 }
+
 
 /*
  @constant eGroupStyle_PrivateOnlyOwnerInvite 私有群组，只能owner权限的人邀请人加入

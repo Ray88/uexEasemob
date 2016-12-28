@@ -14,6 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "EMCommonDefs.h"
+
 /*!
  *  \~chinese 
  *  日志输出级别
@@ -22,9 +24,9 @@
  *  Log output level
  */
 typedef enum {
-    EMLogLevelDebug = 0, /*! \~chinese 输出所有日志 \~english Output all log */
-    EMLogLevelWarning,   /*! \~chinese 输出警告及错误 \~english Output warning and error */
-    EMLogLevelError      /*! \~chinese 只输出错误 \~english Output error only */
+    EMLogLevelDebug = 0, /*! \~chinese 输出所有日志 \~english Output all logs */
+    EMLogLevelWarning,   /*! \~chinese 输出警告及错误 \~english Output warnings and errors */
+    EMLogLevelError      /*! \~chinese 只输出错误 \~english Output errors only */
 } EMLogLevel;
 
 /*!
@@ -43,7 +45,7 @@ typedef enum {
  *  \~english 
  *  Application's unique identifier
  */
-@property (nonatomic, strong, readonly) NSString *appkey;
+@property (nonatomic, copy, readonly) NSString *appkey;
 
 /*!
  *  \~chinese 
@@ -64,13 +66,13 @@ typedef enum {
 @property (nonatomic, assign) EMLogLevel logLevel;
 
 /*!
- *  \~chinese 
- *  是否使用https, 默认为YES
+ *  \~chinese
+ *  是否只使用https, 默认为YES
  *
- *  \~english 
- *  Whether using https, default is YES
+ *  \~english
+ *  Whether using https only, default is YES
  */
-@property (nonatomic, assign) BOOL usingHttps;
+@property (nonatomic, assign) BOOL usingHttpsOnly;
 
 /*!
  *  \~chinese 
@@ -81,7 +83,7 @@ typedef enum {
  *  \~english
  *  Whether using development environment, default is NO
  *
- *  Can only set when initialize sdk [EMClient initializeSDKWithOptions:], can't change it in runtime
+ *  Can only be set when initializing the sdk with [EMClient initializeSDKWithOptions:], can't be altered in runtime.
  */
 @property (nonatomic, assign) BOOL isSandboxMode;
 
@@ -94,7 +96,7 @@ typedef enum {
  *  \~english
  *  Whether auto login, default is YES
  *
- *  Value will be saved to the local. When initialization EMOptions, the first to get the value of the local saved
+ *  Value is saved locally. When initializing the EMOptions, SDK looks for the local value first.
  */
 @property (nonatomic, assign) BOOL isAutoLogin;
 
@@ -103,7 +105,7 @@ typedef enum {
  *  离开群组时是否删除该群所有消息, 默认为YES
  *
  *  \~english
- *  Whether delete all of the group's message when leave group, default is YES
+ *  Whether to delete all the group messages when leaving the group, default is YES
  */
 @property (nonatomic, assign) BOOL isDeleteMessagesWhenExitGroup;
 
@@ -112,7 +114,7 @@ typedef enum {
  *  离开聊天室时是否删除所有消息, 默认为YES
  *
  *  \~english 
- *  Whether delete all of the chatroom's message when leave chatroom, default is YES
+ *  Whether to delete all the chat room messages when leaving the chat room, default is YES
  */
 @property (nonatomic, assign) BOOL isDeleteMessagesWhenExitChatRoom;
 
@@ -121,7 +123,7 @@ typedef enum {
  *  是否允许聊天室Owner离开, 默认为YES
  *
  *  \~english
- *  Whether chatroom's owner can leave chatroom, default is YES
+ *  Whether chat room's owner can leave the chat room, default is YES.
  */
 @property (nonatomic, assign) BOOL isChatroomOwnerLeaveAllowed;
 
@@ -130,7 +132,7 @@ typedef enum {
  *  用户自动同意群邀请, 默认为YES
  *
  *  \~english 
- *  Whether automatically accept group invitation, default is YES
+ *  Whether to automatically accept group invitation, default is YES
  */
 @property (nonatomic, assign) BOOL isAutoAcceptGroupInvitation;
 
@@ -139,7 +141,7 @@ typedef enum {
  *  自动同意好友申请, 默认为NO
  *
  *  \~english 
- *  Whether automatically accept friend invitation, default is NO
+ *  Whether to automatically approve friend request, default is NO
  */
 @property (nonatomic, assign) BOOL isAutoAcceptFriendInvitation;
 
@@ -148,16 +150,16 @@ typedef enum {
  *  是否发送消息送达回执, 默认为NO，如果设置为YES，SDK收到单聊消息时会自动发送送达回执
  *
  *  \~english 
- *  Whether send delivery ack, default is NO, SDK will automatically send delivery ack when receive a single chat message if it's set to YES
+ *  Whether to send delivery acknowledgement, default is NO. If set to YES, SDK will automatically send a delivery acknowledgement when receiving a chat message
  */
 @property (nonatomic, assign) BOOL enableDeliveryAck;
 
 /*!
  *  \~chinese 
- *  从数据库加载消息时是否按服务器时间排序，默认为NO，按接收方时间排序
+ *  从数据库加载消息时是否按服务器时间排序，默认为YES，按服务器时间排序
  *
  *  \~english 
- *  Whether sort message by server time when load message from database, default is NO, sort by receiver's time
+ *  Whether to sort messages by server received time when loading message from database, default is YES.
  */
 @property (nonatomic, assign) BOOL sortMessageByServerTime;
 
@@ -168,11 +170,11 @@ typedef enum {
  *  只能在[EMClient initializeSDKWithOptions:]时设置，不能在程序运行过程中动态修改
  *
  *  \~english
- *  iOS only, push certificate name
+ *  Certificate name of Apple Push Notification Service
  *
- *  Can only set when initialize SDK [EMClient initializeSDKWithOptions:], can't change it in runtime
+ *  Can only be set when initializing the SDK with [EMClient initializeSDKWithOptions:], can't be altered in runtime.
  */
-@property (nonatomic, strong) NSString *apnsCertName;
+@property (nonatomic, copy) NSString *apnsCertName;
 
 /*!
  *  \~chinese 
@@ -183,12 +185,23 @@ typedef enum {
  *  @result SDK设置项实例
  *
  *  \~english
- *  Get SDK setting options instance
+ *  Get a SDK setting options instance
  *
  *  @param aAppkey  App‘s unique identifier
  *
  *  @result SDK’s setting options instance
  */
 + (instancetype)optionsWithAppkey:(NSString *)aAppkey;
+
+#pragma mark - EM_DEPRECATED_IOS 3.2.2
+
+/*!
+ *  \~chinese
+ *  是否使用https, 默认为YES
+ *
+ *  \~english
+ *  Whether using https, default is YES
+ */
+@property (nonatomic, assign) BOOL usingHttps EM_DEPRECATED_IOS(3_0_0, 3_2_2);
 
 @end

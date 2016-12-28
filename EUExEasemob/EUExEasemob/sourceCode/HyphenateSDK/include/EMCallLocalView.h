@@ -1,32 +1,33 @@
-//
-//  EMCallLocalView.h
-//  HyphenateSDK
-//
-//  Created by XieYajie on 2/29/16.
-//  Copyright © 2016 easemob.com. All rights reserved.
-//
+/*!
+ *  \~chinese
+ *  @header EMCallLocalView.h
+ *  @abstract 视频通话本地图像显示页面
+ *  @author Hyphenate
+ *  @version 3.00
+ *
+ *  \~english
+ *  @header EMCallLocalView.h
+ *  @abstract Video call local view
+ *  @author Hyphenate
+ *  @version 3.00
+ */
 
+
+#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+
+#import "EMCallEnum.h"
 
 @interface EMCallLocalView : UIView
 
 /*!
  *  \~chinese
- *  初始化LocalView
- *
- *  @param frame    localView的尺寸
- *  @param sessionPreset  输出分辨率,只支持AVCaptureSessionPreset352x288,AVCaptureSessionPreset640x480
- *
- *  @result 获取LocalView实例
+ *  视频通话页面缩放方式
  *
  *  \~english
- *  Initialization LocalView
- *
- *  @param frame    frame of localView
- *  @param sessionPreset    output resolution,only support AVCaptureSessionPreset352x288 and AVCaptureSessionPreset640x480
- *
- *  @result Get instance of LocalView
+ *  Video view scale mode
  */
-- (instancetype)initWithFrame:(CGRect)frame withSessionPreset:(NSString*)aSessionPreset;
+@property (atomic, assign) EMCallViewScaleMode scaleMode;
 
 @end
+

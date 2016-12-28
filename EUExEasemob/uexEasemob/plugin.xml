@@ -6,6 +6,8 @@
         <method name="login"></method>
         <method name="logout"></method>
         <method name="registerUser"></method>
+        <method name="registerCallback"></method>
+        <method name="unRegisterCallback"></method>
         
         <method name="getConversationByName"></method>
         <method name="sendText"></method>

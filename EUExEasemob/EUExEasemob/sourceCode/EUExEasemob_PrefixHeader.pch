@@ -17,6 +17,9 @@
 
 #import <AppCanKit/AppCanKit.h>
 
+#define UEX_LOG_ERROR(error) \
+    ACLogError(@"uexEasemob -> [%s]. error<%d>: %@",__func__,error.code,error.errorDescription)
+
 
 
 #endif

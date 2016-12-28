@@ -18,13 +18,11 @@
 
 
 @interface EUExEasemob()
-@property (nonatomic,weak,readonly)uexEasemobManager *mgr;
-@property (nonatomic,weak,readonly)EMClient * sharedClient;
+@property (nonatomic,readonly)uexEasemobManager *mgr;
+@property (nonatomic,readonly)EMClient * sharedClient;
 @end
 
 
-#define UEX_LOG_ERROR(error) \
-    ACLogDebug(@"uexEasemob -> [%s]. error<%d>: %@",__func__,error.code,error.errorDescription)
 
 
 @implementation EUExEasemob
@@ -76,20 +74,6 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
 
     });
 }
-//从JSON字符串中获取数据
-- (id)getDataFromJSON:(NSString *)jsonStr{
-    NSError *error = nil;
-    NSData *jsonData = [jsonStr dataUsingEncoding:NSUTF8StringEncoding];
-    id jsonObject = [NSJSONSerialization JSONObjectWithData:jsonData
-                                                    options:NSJSONReadingMutableContainers
-                                                      error:&error];
-    if (jsonObject && !error ){
-        return jsonObject;
-    }else{
-        // 解析錯誤
-        return nil;
-    }
-}
 
 #pragma mark - Plugin Method
 
@@ -104,9 +88,14 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
     NSString *appKey = stringArg(info[@"appKey"]);
     
     EMOptions *options = [EMOptions optionsWithAppkey:appKey];
-    
+    options.usingHttpsOnly = YES;
+    if (ACLogGlobalLogMode & ACLogLevelDebug) {
+        options.logLevel = EMLogLevelDebug;
+        options.enableConsoleLog = YES;
+    }else{
+        options.logLevel = EMLogLevelWarning;
+    }
     options.apnsCertName = stringArg(info[@"apnsCertName"]);
-    options.enableConsoleLog = numberArg(info[@"debug"]).boolValue;
     options.isAutoLogin = (numberArg(info[@"isAutoLoginEnabled"]).integerValue != 2);
     options.isAutoAcceptGroupInvitation = (numberArg(info[@"isAutoAcceptGroupInvitation"]).integerValue != 2);
     
@@ -117,7 +106,13 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
 
 }
 
+- (void)registerCallback:(NSMutableArray *)inArguments{
+    [self.mgr registerCallback:self.webViewEngine];
+}
 
+- (void)unRegisterCallback:(NSMutableArray *)inArguments{
+    [self.mgr unregisterCallback:self.webViewEngine];
+}
 
 - (void)login:(NSMutableArray *)inArguments{
     
@@ -206,10 +201,8 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
     [dict setValue:(self.sharedClient.isAutoLogin ? @1 : @2)  forKey:@"isAutoLoginEnabled"];
     if(self.sharedClient.isLoggedIn){
         NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
-        [userInfo setValue:@(self.sharedClient.isConnected)   forKey:@"isConnected"];
-        [userInfo setValue:@(self.sharedClient.isLoggedIn)  forKey:@"isLoggedIn"];
-        [userInfo setValue:@(self.sharedClient.isAutoLogin)  forKey:@"isAutoLoginEnabled"];
-        [userInfo setValue:self.sharedClient.pushOptions.nickname  forKey:@"nickname"];
+        [userInfo setValue:self.sharedClient.currentUsername forKey:@"username"];
+        [userInfo setValue:self.sharedClient.pushOptions.displayName  forKey:@"nickname"];
         [dict setValue:userInfo  forKey:@"userInfo"];
     }
     [self callbackWithFunctionName:@"cbGetLoginInfo" obj:dict];
@@ -223,10 +216,7 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
 
 #pragma mark - Message
 
-- (void)handleMessageSent:(EMMessage *)message error:(EMError *)error{
-    
 
-}
 
 - (void)sendMessageWithBody:(EMMessageBody *)body
                    chatType:(EMChatType)chatType
@@ -234,20 +224,19 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
                          to:(NSString *)conversationID{
     EMMessage *message = [[EMMessage alloc]initWithConversationID:conversationID from:[self.sharedClient currentUsername] to:conversationID body:body ext:ext];
     
-    [self.sharedClient.chatManager asyncSendMessage:message
-                                           progress:nil
-                                         completion:^(EMMessage *message, EMError *error) {
-                                             NSMutableDictionary *result=[NSMutableDictionary dictionary];
-                                             if(error){
-                                                 [result setValue:UEX_FALSE forKey:@"isSuccess"];
-                                                 [result setValue:error.errorDescription forKey:@"errorStr"];
-                                             }
-                                             else{
-                                                 [result setValue:UEX_TRUE forKey:@"isSuccess"];
-                                             }
-                                             [result setValue:[self.mgr analyzeEMMessage:message] forKey:@"message"];
-                                             [self callbackWithFunctionName:@"onMessageSent" obj:result];
-                                         }];
+    [self.sharedClient.chatManager sendMessage:message progress:nil completion:^(EMMessage *message, EMError *error) {
+        NSMutableDictionary *result=[NSMutableDictionary dictionary];
+        if(error){
+            [result setValue:UEX_FALSE forKey:@"isSuccess"];
+            [result setValue:error.errorDescription forKey:@"errorStr"];
+        }
+        else{
+            [result setValue:UEX_TRUE forKey:@"isSuccess"];
+        }
+        [result setValue:[self.mgr analyzeEMMessage:message] forKey:@"message"];
+        [self callbackWithFunctionName:@"onMessageSent" obj:result];
+    }];
+    
 }
 
 
@@ -305,7 +294,7 @@ static EMChatType getMessageType(NSDictionary *info){
     ACArgsUnpack(NSDictionary *info) = inArguments;
     NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
-    NSString *displayName = stringArg(info[@"displayName"]);
+    NSString *displayName = stringArg(info[@"displayName"])?:[filePath lastPathComponent];
     NSNumber *length = numberArg(info[@"length"]);
     EMVoiceMessageBody *msgBody = [[EMVoiceMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
     msgBody.duration = length.intValue;
@@ -318,7 +307,7 @@ static EMChatType getMessageType(NSDictionary *info){
     ACArgsUnpack(NSDictionary *info) = inArguments;
     NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
-    NSString *displayName = stringArg(info[@"displayName"]);
+    NSString *displayName = stringArg(info[@"displayName"])?:[filePath lastPathComponent];
     EMImageMessageBody *msgBody = [[EMImageMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
 
     [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
@@ -341,7 +330,7 @@ static EMChatType getMessageType(NSDictionary *info){
     ACArgsUnpack(NSDictionary *info) = inArguments;
     NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
-    NSString *displayName = stringArg(info[@"displayName"]);
+    NSString *displayName = stringArg(info[@"displayName"])?:[filePath lastPathComponent];
     NSNumber *length = numberArg(info[@"length"]);
     EMVideoMessageBody *msgBody = [[EMVideoMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
     msgBody.duration = length.intValue;
@@ -355,7 +344,7 @@ static EMChatType getMessageType(NSDictionary *info){
     ACArgsUnpack(NSDictionary *info) = inArguments;
     NSString *username = stringArg(info[@"username"]);
     NSString *filePath = stringArg(info[@"filePath"]);
-    NSString *displayName = stringArg(info[@"displayName"]);
+    NSString *displayName = stringArg(info[@"displayName"])?:[filePath lastPathComponent];
     EMFileMessageBody *msgBody = [[EMFileMessageBody alloc] initWithLocalPath:filePath displayName:displayName];
     [self sendMessageWithBody:msgBody chatType:getMessageType(info) ext:getMessageExt(info) to:username];
 }
@@ -373,11 +362,7 @@ static EMChatType getMessageType(NSDictionary *info){
 
         
 - (void)setNotifyBySoundAndVibrate:(NSMutableArray *)inArguments {
-    if(inArguments.count<1){
-        return;
-    }
-    id notifyInfo = [self getDataFromJSON:inArguments[0]];
-    
+    ACArgsUnpack(NSDictionary *notifyInfo) = inArguments;
     if ([[notifyInfo objectForKey:@"enable"] integerValue] == 0){
         self.mgr.messageNotification = NO;
     }else if([[notifyInfo objectForKey:@"enable"] integerValue] == 1){
@@ -418,7 +403,7 @@ static EMChatType getMessageType(NSDictionary *info){
     
     //不需要从本来的会话里面去取
     EMConversation *conversation = [self.sharedClient.chatManager getConversation:@"appcan" type:EMConversationTypeChat createIfNotExist:YES];
-    EMMessage *message = [conversation loadMessageWithId:msgId];
+    EMMessage *message = [conversation loadMessageWithId:msgId error:nil];
     return message;
 }
 
@@ -443,7 +428,7 @@ static EMChatType getMessageType(NSDictionary *info){
     NSString *msgId = stringArg(info[@"msgId"]);
     EMMessage *msg = [self getMessage:msgId];
     if(msg){
-        [self.sharedClient.chatManager asyncSendReadAckForMessage:msg];
+        [self.sharedClient.chatManager sendMessageReadAck:msg completion:nil];
         
     }
 
@@ -479,10 +464,10 @@ static EMConversation * getConversation(NSDictionary *info){
 
 - (void)getConversationByName:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
-
-    NSDictionary *dict = [self.mgr analyzeEMConversation:getConversation(info)];
-    [self callbackWithFunctionName:@"cbGetConversationByName" obj:dict];
-    [cb executeWithArguments:ACArgsPack(dict)];
+    [self.mgr asyncAnalyzeEMConversation:getConversation(info) completion:^(NSDictionary * dict) {
+        [self callbackWithFunctionName:@"cbGetConversationByName" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
+    }];
 
 }
 
@@ -494,19 +479,27 @@ static EMConversation * getConversation(NSDictionary *info){
     
     NSString *startMsgId = stringArg(info[@"startMsgId"]);
     NSNumber *inPageSize = numberArg(info[@"pagesize"]);
-    NSMutableArray *msgList = [NSMutableArray array];
+    
     int pagesize = inPageSize ? inPageSize.intValue : 20;
 
-    NSArray *messages = [conversation loadMoreMessagesFromId:startMsgId limit:pagesize direction:EMMessageSearchDirectionUp];
-    for(EMMessage *msg in messages){
-        NSDictionary *msgDict = [self.mgr analyzeEMMessage:msg];
-        if (msgDict) {
-            [msgList addObject:msgDict];
+    
+    [conversation loadMessagesStartFromId:startMsgId count:pagesize searchDirection:EMMessageSearchDirectionUp completion:^(NSArray *aMessages, EMError *aError) {
+        if (aError) {
+            UEX_LOG_ERROR(aError);
         }
-    }
-    NSDictionary *dict = @{@"messages":msgList};
-    [self callbackWithFunctionName:@"cbGetMessageHistory" obj:dict];
-    [cb executeWithArguments:ACArgsPack(dict)];
+        NSMutableArray *msgList = [NSMutableArray array];
+        for(EMMessage *msg in aMessages){
+            NSDictionary *msgDict = [self.mgr analyzeEMMessage:msg];
+            if (msgDict) {
+                [msgList addObject:msgDict];
+            }
+        }
+        NSDictionary *dict = @{@"messages":msgList};
+        [self callbackWithFunctionName:@"cbGetMessageHistory" obj:dict];
+        [cb executeWithArguments:ACArgsPack(dict)];
+    }];
+    
+
 }
 
 
@@ -550,7 +543,11 @@ static EMConversation * getConversation(NSDictionary *info){
 - (void)resetUnreadMsgCount:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
     EMConversation *conversation = getConversation(info);
-    [conversation markAllMessagesAsRead];
+    EMError *error = nil;
+    [conversation markAllMessagesAsRead:&error];
+    if (error) {
+        UEX_LOG_ERROR(error);
+    }
 }
 
 /*
@@ -584,7 +581,11 @@ static EMConversation * getConversation(NSDictionary *info){
 - (void)deleteConversation:(NSMutableArray *)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
     EMConversation *conversation = getConversation(info);
-    [conversation deleteAllMessages];
+    EMError *error = nil;
+    [conversation deleteAllMessages:&error];
+    if (error) {
+        UEX_LOG_ERROR(error);
+    }
 }
 /*
  #####[3.13]removeMessage(param)//删除当前会话的某条聊天记录
@@ -595,17 +596,29 @@ static EMConversation * getConversation(NSDictionary *info){
  isGroup:，//是否为群组 1-是 2-否(仅iOS需要)
  }
  */
-- (void)removeMessage:(NSMutableArray*)inArguments{
+- (UEX_BOOL)removeMessage:(NSMutableArray*)inArguments{
     ACArgsUnpack(NSDictionary *info) = inArguments;
     NSString *msgId = stringArg(info[@"msgId"]);
     EMConversation *conversation = getConversation(info);
-    [conversation deleteMessageWithId:msgId];
+    EMError *error = nil;
+    [conversation deleteMessageWithId:msgId error:&error];
+    if (error) {
+        UEX_LOG_ERROR(error);
+        return UEX_FALSE;
+    }
+    return UEX_TRUE;
+    
 }
 /*
  #####[3.14]deleteAllConversation();//删除所有会话记录(包括本地)
  */
 - (void)deleteAllConversation:(NSMutableArray*)array{
-    [self.sharedClient.chatManager deleteConversations:[self.sharedClient.chatManager getAllConversations] deleteMessages:YES];
+
+    [self.sharedClient.chatManager deleteConversations:[self.sharedClient.chatManager getAllConversations] isDeleteMessages:YES completion:^(EMError *aError) {
+        if (aError) {
+            UEX_LOG_ERROR(aError);
+        }
+    }];
 }
 /*
 ##### [3.15]getChatterInfo();//获取聊天对象信息
@@ -690,7 +703,7 @@ var chatterInfo = {
         
         
         
-        NSArray *conversationArray = [self.sharedClient.chatManager loadAllConversationsFromDB];
+        NSArray *conversationArray = [self.sharedClient.chatManager getAllConversations];
 
         for(EMConversation *conversation in conversationArray){
             if (!conversation.conversationId || conversation.conversationId.length == 0) {
@@ -863,7 +876,7 @@ var chatterInfo = {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
         ACArgsUnpack(NSDictionary *info) = inArguments;
         NSString *username = stringArg(info[@"username"]);
-        EMError *error = [self.sharedClient.contactManager deleteContact:username];
+        EMError *error = [self.sharedClient.contactManager deleteContact:username isDeleteConversation:YES];
         if (error) {
             UEX_LOG_ERROR(error);
         }
@@ -958,7 +971,7 @@ var chatterInfo = {
         if (userNumber > 0){
             groupStyleSetting.maxUsersCount = userNumber;
         }
-        BOOL allowInvite = [stringArg(info[@"allowInvite"]) isEqual:@"true"] || numberArg(info[@"allowInvite"]).boolValue;
+        BOOL allowInvite = numberArg(info[@"allowInvite"]).boolValue;
         groupStyleSetting.style = allowInvite ? EMGroupStylePrivateMemberCanInvite : EMGroupStylePrivateOnlyOwnerInvite;
         NSArray *members = arrayArg(info[@"members"]);
         NSString *groupName = stringArg(info[@"groupName"]);
@@ -1171,7 +1184,7 @@ var chatterInfo = {
         
         BOOL loadCache = [stringArg(info[@"loadCache"]) isEqual:@"true"] || numberArg(info[@"loadCache"]).boolValue;
         if (loadCache) {
-            NSArray *groups = [self.sharedClient.groupManager loadAllMyGroupsFromDB];
+            NSArray *groups = [self.sharedClient.groupManager getJoinedGroups];
             [dict setValue:@0 forKey:@"result"];
             [dict setValue:getGrouplist(groups) forKey:@"grouplist"];
         }else{
@@ -1515,27 +1528,33 @@ var chatterInfo = {
     ACArgsUnpack(NSDictionary *info) = inArguments;
 
     NSString *username = stringArg(info[@"username"]);
-    EMError *error;
-    self.mgr.callSession = [self.sharedClient.callManager makeVoiceCall:username error:&error];
-    if (error) {
-        UEX_LOG_ERROR(error);
-    }
+    @weakify(self);
+    [self.sharedClient.callManager startCall:EMCallTypeVoice remoteName:username ext:nil completion:^(EMCallSession *aCallSession, EMError *aError) {
+        @strongify(self);
+        if (aError) {
+            UEX_LOG_ERROR(aError);
+        }else{
+            [self callbackWithFunctionName:@"onCallStateChanged" obj:@{@"state": @1}];
+            self.mgr.callSession = aCallSession;
+        }
+    }];
+
 }
 
 
 - (void)answerCall:(NSMutableArray *)inArguments{
-    
-    [self.sharedClient.callManager answerCall:self.mgr.callSession.sessionId];
+    [self.sharedClient.callManager answerIncomingCall:self.mgr.callSession.callId];
+
 }
 
 - (void)rejectCall:(NSMutableArray *)inArguments{
     
-    [self.sharedClient.callManager endCall:self.mgr.callSession.sessionId reason:EMCallEndReasonDecline];
+    [self.sharedClient.callManager endCall:self.mgr.callSession.callId reason:EMCallEndReasonDecline];
 }
 
 - (void)endCall:(NSMutableArray *)inArguments{
     
-    [self.sharedClient.callManager endCall:self.mgr.callSession.sessionId reason:EMCallEndReasonHangup];
+    [self.sharedClient.callManager endCall:self.mgr.callSession.callId reason:EMCallEndReasonHangup];
 }
 
 #pragma mark - APNS
@@ -1558,16 +1577,13 @@ static BOOL isEasemobRegisterRemoteNofitication = NO;
 
     isEasemobRegisterRemoteNofitication = YES;
     regAPNSFunc = JSFunctionArg(inArguments.lastObject);
-    UIApplication *application = [UIApplication sharedApplication];
 #if !TARGET_IPHONE_SIMULATOR
-    if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
-        [application registerForRemoteNotifications];
-    }else{
-        UIRemoteNotificationType notificationTypes = UIRemoteNotificationTypeBadge |
-        UIRemoteNotificationTypeSound |
-        UIRemoteNotificationTypeAlert;
-        [application registerForRemoteNotificationTypes:notificationTypes];
-    }
+
+    UIUserNotificationSettings *uns = [UIUserNotificationSettings settingsForTypes:(UIUserNotificationTypeAlert|UIUserNotificationTypeBadge|UIUserNotificationTypeSound) categories:nil];
+    //注册推送
+    [[UIApplication sharedApplication] registerUserNotificationSettings:uns];
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
+    
 #endif
     
     
@@ -1611,10 +1627,10 @@ static BOOL isEasemobRegisterRemoteNofitication = NO;
 - (void)updatePushOptions:(NSMutableArray *)inArguments{
 
     ACArgsUnpack(NSDictionary *info,ACJSFunctionRef *cb) = inArguments;
-    EMPushOptions *options = [self.sharedClient pushOptions];
+    EMPushOptions *options = [self.sharedClient getPushOptionsFromServerWithError:nil];
     NSString *nickname = stringArg(info[@"nickname"]);
     if (nickname) {
-        options.nickname = nickname;
+        options.displayName = nickname;
     }
     NSNumber *inDisplayStyle = numberArg(info[@"displayStyle"]);
     if (inDisplayStyle) {
@@ -1650,7 +1666,7 @@ static BOOL isEasemobRegisterRemoteNofitication = NO;
         UEX_LOG_ERROR(error);
     }
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    [dict setValue:options.nickname forKey:@"nickname"];
+    [dict setValue:options.displayName forKey:@"nickname"];
     [dict setValue:@(options.noDisturbingStartH) forKey:@"noDisturbingStartH"];
     [dict setValue:@(options.noDisturbingEndH) forKey:@"noDisturbingEndH"];
     NSNumber *noDisturbStatus;
@@ -1704,8 +1720,11 @@ static BOOL isEasemobRegisterRemoteNofitication = NO;
         UEX_LOG_ERROR(error);
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(void){
-
-        NSArray *groups = [self.sharedClient.groupManager getAllIgnoredGroupIds];
+        EMError *error = nil;
+        NSArray *groups = [self.sharedClient.groupManager getGroupsWithoutPushNotification:&error];
+        if (error) {
+            UEX_LOG_ERROR(error);
+        }
         NSDictionary *dict = groups ? @{@"groupIds": groups} : nil;
         [self callbackWithFunctionName:@"cbIgnoreGroupPushNotification" obj:dict];
         [cb executeWithArguments:ACArgsPack(dict)];
