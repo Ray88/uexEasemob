@@ -7,7 +7,7 @@
 //
 
 #import "uexEasemobManager.h"
-
+#import "EMCDDeviceManager.h"
 #import <AppCanKit/ACEXTScope.h>
 
 

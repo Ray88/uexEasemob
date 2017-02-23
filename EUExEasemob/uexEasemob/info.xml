@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <uexplugins>
     <plugin
-        uexName="uexEasemob" version="4.0.1" build="1">
-        <info>1: SDK升级,支持ATS</info>
+        uexName="uexEasemob" version="4.0.2" build="2">
+        <info>2: SDK升级至3.2.3</info>
+        <build>1: SDK升级,支持ATS</build>
         <build>0: 环信插件 for iOS</build>
     </plugin>
 </uexplugins>

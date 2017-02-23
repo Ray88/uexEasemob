@@ -7,11 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "EMSDK.h"
-#import "EMClient+Call.h"
-#import "EMCallSession.h"
-#import "EMCDDeviceManager.h"
-#import "EMCDDeviceManagerDelegate.h"
+#import <Hyphenate/Hyphenate.h>
+//#import "EMClient+Call.h"
+//#import "EMCallSession.h"
+//#import "EMCDDeviceManager.h"
+//#import "EMCDDeviceManagerDelegate.h"
 
 
 
