@@ -178,7 +178,7 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
             [dict setValue:[NSString stringWithFormat:@"注册失败<%d>:%@",error.code,error.errorDescription] forKey:@"msg"];
         }
         [self callbackWithFunctionName:@"cbRegisterUser" obj:dict];
-        [cb executeWithArguments:ACArgsPack(err)];
+        [cb executeWithArguments:ACArgsPack(dict)];
     });
     
 }
@@ -223,6 +223,8 @@ static NSString *const kUexEasemobUserDefaultsAPNSUsageKey = @"kUexEasemobUserDe
                         ext:(NSDictionary *)ext
                          to:(NSString *)conversationID{
     EMMessage *message = [[EMMessage alloc]initWithConversationID:conversationID from:[self.sharedClient currentUsername] to:conversationID body:body ext:ext];
+    message.chatType = chatType;
+    
     
     [self.sharedClient.chatManager sendMessage:message progress:nil completion:^(EMMessage *message, EMError *error) {
         NSMutableDictionary *result=[NSMutableDictionary dictionary];
@@ -831,7 +833,7 @@ var chatterInfo = {
         }
         
         [self callbackWithFunctionName:@"cbGetContactUserNames" obj:users];
-        [cb executeWithArguments:ACArgsPack(err,users)];
+        [cb executeWithArguments:ACArgsPack(users)];
     });
     
 }
